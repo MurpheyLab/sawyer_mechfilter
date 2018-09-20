@@ -3,7 +3,7 @@
   <arg name="vis" default="false" /> <!-- run rviz? -->
   
     <!-- startup simulator node -->
-    <node pkg="sawyer_humcpp" type="impede_test" name="simulator"
+    <node pkg="sawyer_humcpp" type="impede_test" name="impede_test"
 	  respawn="true" output="screen" />
     
   <!-- rviz if needed -->
