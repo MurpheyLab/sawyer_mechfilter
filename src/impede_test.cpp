@@ -46,6 +46,8 @@ class ImpedeSimulator{
   ros::Publisher interactCommand;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
+  int counter = 1;
+  //void interact_options(bool);
     
   public:
   ImpedeSimulator(ros::NodeHandle* _nh){
@@ -59,31 +61,16 @@ class ImpedeSimulator{
   
   //set up timer callback fxn
   void timercall(const ros::TimerEvent& event){
-    interactopt.header.stamp = ros::Time::now();
-    interactopt.header.seq=1;
-    interactopt.header.frame_id = "base";
-    interactopt.interaction_control_active = true;
-    interactopt.interaction_control_mode = {1,1,1,1,1,1};
-    interactopt.K_impedance ={1,1,1300,30,30,30} ;
-    interactopt.max_impedance = {false,false,true,true,true,true};
-    //interactopt.D_impedance = {0,0,0,0,0,0};
-    interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
-    interactopt.force_command = {0.,0.,0.,0.,0.,0.};
-    interactopt.interaction_frame.position.x = 0;
-    interactopt.interaction_frame.position.y =0;
-    interactopt.interaction_frame.position.z  =0;
-    interactopt.interaction_frame.orientation.x = 0;
-    interactopt.interaction_frame.orientation.y = 0;
-    interactopt.interaction_frame.orientation.z = 0;
-    interactopt.interaction_frame.orientation.w = 1;
-    interactopt.endpoint_name ="right_hand";
-    interactopt.in_endpoint_frame = true;
-    interactopt.disable_damping_in_force_control = false;
-    interactopt.disable_reference_resetting = true;
-    interactopt.rotations_for_constrained_zeroG = false;
-    //ROS_INFO(interactopt);
-    interactCommand.publish(interactopt); 
     tcurr = ros::Time::now() - t0;
+    if(tcurr.toSec()>26.){interact_options(false);ROS_INFO("UnLocked");}
+    else if(tcurr.toSec()>25.){interact_options(true);ROS_INFO("Locked");}
+    else if(tcurr.toSec()>17.){interact_options(false);ROS_INFO("UnLocked");}
+    else if(tcurr.toSec()>16.){interact_options(true);ROS_INFO("Locked");}
+    else if(tcurr.toSec()>12.){interact_options(false);ROS_INFO("UnLocked");}
+    else if(tcurr.toSec()>10.){interact_options(true); ROS_INFO("Locked");} 
+    else{interact_options(false);};
+    interactCommand.publish(interactopt); 
+    
     //ROS_INFO("Time Now: %f",tcurr.toSec());
   };
   //state update from end effector
@@ -94,7 +81,37 @@ class ImpedeSimulator{
   void calc_input(const sensor_msgs::Imu& imu){
     //ROS_INFO("Got the Acc");
   };
-    
+  //setting the impedance of the interaction options message
+  void interact_options(bool reject){
+    interactopt.header.stamp = ros::Time::now();
+    interactopt.header.seq=1;
+    interactopt.header.frame_id = "base";
+    interactopt.interaction_control_active = true;
+    interactopt.interaction_control_mode = {1,1,1,1,1,1};
+    //if (reject==true){  counter++;
+    //interactopt.K_impedance ={counter*10.,counter*10.,1300,30,30,30} ;
+    //}
+    //else 
+    interactopt.K_impedance = {0,0,1300,30,30,30};
+    interactopt.max_impedance = {false,false,true,true,true,true};
+    interactopt.D_impedance = {0,0,8.,0,2,2};
+    if(reject==true)interactopt.D_impedance = {100.,100.,50.,2.,2.,2.};
+    interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
+    interactopt.force_command = {0.,0.,0.,0.,0.,0.};
+    interactopt.interaction_frame.position.x = 0;
+    interactopt.interaction_frame.position.y =0;
+    interactopt.interaction_frame.position.z  =0;
+    interactopt.interaction_frame.orientation.x = 0;
+    interactopt.interaction_frame.orientation.y = 0;
+    interactopt.interaction_frame.orientation.z = 0;
+    interactopt.interaction_frame.orientation.w = 1;
+    interactopt.endpoint_name ="right_hand";
+    interactopt.in_endpoint_frame = false;
+    interactopt.disable_damping_in_force_control = false;
+    interactopt.disable_reference_resetting = false;
+    //if(reject==true)interactopt.disable_reference_resetting = false;
+    interactopt.rotations_for_constrained_zeroG = false;
+  }; 
         
 };
     
@@ -104,7 +121,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "impede_test");
   ros::NodeHandle n;
   ImpedeSimulator sim(&n);
-  ros::Timer timer = n.createTimer(ros::Duration(1/10.), &ImpedeSimulator::timercall, &sim);
+  ros::Timer timer = n.createTimer(ros::Duration(1./100.), &ImpedeSimulator::timercall, &sim);
   ros::spin();
  return 0;
 };
