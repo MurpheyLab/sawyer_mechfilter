@@ -5,6 +5,8 @@
     <!-- startup simulator node -->
     <node pkg="sawyer_humcpp" type="impede_test" name="impede_test"
 	  respawn="true" output="screen" />
+    <node pkg="sawyer_humcpp" type="visualizer" name="visualizer"
+	  respawn="true" output="screen" />
     
   <!-- rviz if needed -->
   <group if="$(arg vis)">
