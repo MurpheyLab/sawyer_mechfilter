@@ -48,7 +48,7 @@ class ImpedeSimulator{
   intera_core_msgs::InteractionControlCommand interactopt;
   //setup publishers, subscribers:
   ros::Publisher interactCommand;
-  //ros::Publisher mda_pub;
+  ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
   //void interact_options(bool);
@@ -65,7 +65,7 @@ class ImpedeSimulator{
       nh=_nh;
     ROS_INFO("Creating ImpedeSimulator class");
     //setup publishers & subscribers
-    //mda_pub = nh->advertise<sawyer_humcpp::mdasys>("mda_topic", 5);  
+    mda_pub = nh->advertise<sawyer_humcpp::mdasys>("mda_topic", 5);  
     interactCommand = nh->advertise<intera_core_msgs::InteractionControlCommand>("/robot/limb/right/interaction_control_command",1);
     cursor_state = nh->subscribe("/robot/limb/right/endpoint_state",5,&ImpedeSimulator::update_state,this);
     end_acc = nh->subscribe("/robot/accelerometer/right_accelerometer/state",5,&ImpedeSimulator::calc_input,this);
@@ -87,16 +87,15 @@ class ImpedeSimulator{
   };
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
+      ROS_DEBUG("GOt the state");
       currstate.sys_time = (ros::Time::now() - t0).toSec();
-      currstate.q[0] = state.pose.position.x;
-      currstate.q[1] = state.pose.position.y;
-      currstate.q[2] = state.pose.position.z;
-      //currstate.dq = state.twist
+      currstate.q = {(float)state.pose.position.x,(float)state.pose.position.y,(float)state.pose.position.z};
+      currstate.dq = {(float)state.twist.linear.x,(float)state.twist.linear.y,(float)state.twist.linear.z};
       //currstate.ddq =
       //currstate.sac = 
-      //currstate.u = state.wrench
+      currstate.u = {(float)state.wrench.force.x,(float)state.wrench.force.y,(float)state.wrench.force.z};
       //curr.accept = 
-    //mda_pub.publish(currstate);
+    mda_pub.publish(currstate);
   };
   //state update from end effector
   void calc_input(const sensor_msgs::Imu& imu){
