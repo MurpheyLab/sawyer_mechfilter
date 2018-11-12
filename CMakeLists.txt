@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs visualizat
   intera_motion_msgs
   intera_interface)
 
-#add_message_files(FILES mdasys.msg)
+add_message_files(FILES mdasys.msg)
 
 generate_messages(DEPENDENCIES std_msgs geometry_msgs)
 
@@ -37,4 +37,6 @@ include_directories(include
 )
 add_executable(impede_test src/impede_test.cpp)
 add_dependencies(impede_test ${catkin_EXPORTED_TARGETS})
-target_link_libraries(impede_test ${catkin_LIBRARIES})
+target_link_libraries(impede_test ${catkin_LIBRARIES} armadillo)
+
+

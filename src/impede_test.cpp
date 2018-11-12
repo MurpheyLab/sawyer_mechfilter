@@ -29,12 +29,16 @@ SERVICES:
 //#include <intera_interface/RobotEnable.h>
 //#include<intera_interface>
 
-
-//from intera_motion_interface import InteractionOptions
-//from intera_motion_interface.utility_functions import int2bool
-
-//#include "intera_interface"
-//from intera_interface import CHECK_VERSION
+//MDA Headers
+#include <fstream>
+#include<math.h>
+#include<armadillo>
+#include"SAC_cartpend/cartpend.hpp"
+#include"SAC_cartpend/error_cost.hpp"
+#include"SAC_cartpend/SAC.hpp"
+#include"SAC_cartpend/rk4_int.hpp"
+#include "sawyer_humcpp/mdasys.h"
+using namespace std;
 
 
 class ImpedeSimulator{
@@ -44,16 +48,24 @@ class ImpedeSimulator{
   intera_core_msgs::InteractionControlCommand interactopt;
   //setup publishers, subscribers:
   ros::Publisher interactCommand;
+  //ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
-  int counter = 1;
   //void interact_options(bool);
+  
+  //SAC parameters and variables
+  sawyer_humcpp::mdasys currstate;
+  arma::vec xd(double t){
+    return arma::zeros(4);};
+  arma::vec unom(double t){
+    return arma::zeros(1);};
     
   public:
   ImpedeSimulator(ros::NodeHandle* _nh){
       nh=_nh;
     ROS_INFO("Creating ImpedeSimulator class");
-    //setup publishers
+    //setup publishers & subscribers
+    //mda_pub = nh->advertise<sawyer_humcpp::mdasys>("mda_topic", 5);  
     interactCommand = nh->advertise<intera_core_msgs::InteractionControlCommand>("/robot/limb/right/interaction_control_command",1);
     cursor_state = nh->subscribe("/robot/limb/right/endpoint_state",5,&ImpedeSimulator::update_state,this);
     end_acc = nh->subscribe("/robot/accelerometer/right_accelerometer/state",5,&ImpedeSimulator::calc_input,this);
@@ -75,7 +87,16 @@ class ImpedeSimulator{
   };
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
-    //ROS_INFO("Got the State");
+      currstate.sys_time = (ros::Time::now() - t0).toSec();
+      currstate.q[0] = state.pose.position.x;
+      currstate.q[1] = state.pose.position.y;
+      currstate.q[2] = state.pose.position.z;
+      //currstate.dq = state.twist
+      //currstate.ddq =
+      //currstate.sac = 
+      //currstate.u = state.wrench
+      //curr.accept = 
+    //mda_pub.publish(currstate);
   };
   //state update from end effector
   void calc_input(const sensor_msgs::Imu& imu){
@@ -88,10 +109,6 @@ class ImpedeSimulator{
     interactopt.header.frame_id = "base";
     interactopt.interaction_control_active = true;
     interactopt.interaction_control_mode = {1,1,1,1,1,1};
-    //if (reject==true){  counter++;
-    //interactopt.K_impedance ={counter*10.,counter*10.,1300,30,30,30} ;
-    //}
-    //else 
     interactopt.K_impedance = {0,0,1300,30,30,30};
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
