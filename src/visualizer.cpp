@@ -18,7 +18,7 @@ class VisualCP{
   //Mass Marker
   visualization_msgs::Marker mass;
     
-   visualization_msgs::Marker marker;std::cout<<"wtf"<<std::endl;
+  visualization_msgs::Marker marker;std::cout<<"wtf"<<std::endl;
    //marker.header.frame_id = "base_link";
    //marker.header.stamp = ros::Time();
     //mass.header.frame_id = "cart";
