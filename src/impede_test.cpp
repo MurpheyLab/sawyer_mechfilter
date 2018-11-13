@@ -40,6 +40,7 @@ SERVICES:
 #include "sawyer_humcpp/mdasys.h"
 using namespace std;
 
+const double DT=1./100.;
 
 class ImpedeSimulator{
   ros::Time t0 = ros::Time::now();
@@ -51,14 +52,28 @@ class ImpedeSimulator{
   ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
+  //float xprev[3];
+  float vprev=0.0;
   //void interact_options(bool);
   
-  //SAC parameters and variables
+  //SAC parameters,variables, and setup
   sawyer_humcpp::mdasys currstate;
   arma::vec xd(double t){
     return arma::zeros(4);};
   arma::vec unom(double t){
     return arma::zeros(1);};
+    CartPend syst1{0.1,0.1,9.81,2.0,0.01};
+    arma::mat Q = {
+        {200,0.,0.,0.},
+        {0., 0.,0.,0.},
+        {0.,0.,20.,0.},
+        {0.,0.,0.,1.}};
+    arma::mat R = 0.3*arma::eye(1,1);
+    arma::vec umax = {20};
+    bool initcon=false;
+    //intera_core_msgs::EndpointState initcon;
+    
+    
     
   public:
   ImpedeSimulator(ros::NodeHandle* _nh){
@@ -69,6 +84,7 @@ class ImpedeSimulator{
     interactCommand = nh->advertise<intera_core_msgs::InteractionControlCommand>("/robot/limb/right/interaction_control_command",1);
     cursor_state = nh->subscribe("/robot/limb/right/endpoint_state",5,&ImpedeSimulator::update_state,this);
     end_acc = nh->subscribe("/robot/accelerometer/right_accelerometer/state",5,&ImpedeSimulator::calc_input,this);
+    
     };
   
   //set up timer callback fxn
@@ -87,10 +103,21 @@ class ImpedeSimulator{
   };
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
-      ROS_DEBUG("GOt the state");
+      if(initcon==false)
+        {syst1.Xcurr = {-3.1,state.pose.position.x,0.,0.}; 
+         initcon=true;
+         //xprev[0]=state.pose.position.x;xprev[1]=state.pose.position.x;
+         //xprev[2]=state.pose.position.x;
+        };
+      
       currstate.sys_time = (ros::Time::now() - t0).toSec();
       currstate.ef = {(float)state.pose.position.x,(float)state.pose.position.y,(float)state.pose.position.z};
-      currstate.q = {(float) PI,(float)state.pose.position.x};
+      //xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=(float)state.pose.position.x;
+      float acc = (state.twist.linear.x-vprev)/DT;//(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);
+      vprev=state.twist.linear.x;
+      syst1.Ucurr = {acc}; 
+      //syst1.Xcurr = {-3.1, 0.0,0.0,0.0};
+      currstate.q = {(float)syst1.Xcurr[0],(float)syst1.Xcurr[1]};
       currstate.dq = {(float)state.twist.linear.x,(float)state.twist.linear.y,(float)state.twist.linear.z};
       //currstate.ddq =
       //currstate.sac = 
@@ -138,7 +165,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "impede_test");
   ros::NodeHandle n;
   ImpedeSimulator sim(&n);
-  ros::Timer timer = n.createTimer(ros::Duration(1./100.), &ImpedeSimulator::timercall, &sim);
+  ros::Timer timer = n.createTimer(ros::Duration(DT), &ImpedeSimulator::timercall, &sim);
   ros::spin();
  return 0;
 };

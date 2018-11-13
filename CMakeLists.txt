@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sawyer_humcpp)
+#set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#find_package(Armadillo REQUIRED)
+#include_directories(${ARMADILLO_INCLUDE_DIRS})
 
-add_definitions(-std=c++11)
+add_definitions(-std=c++14)
 
 find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs visualization_msgs genmsg message_generation
   actionlib
