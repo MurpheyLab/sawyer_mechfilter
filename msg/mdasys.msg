@@ -1,5 +1,6 @@
 float32 sys_time
-float64[] q
+float64[] ef
+float32[] q
 float32[] dq
 float32[] ddq
 float32[] sac
