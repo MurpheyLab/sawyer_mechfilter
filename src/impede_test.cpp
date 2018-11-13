@@ -52,8 +52,8 @@ class ImpedeSimulator{
   ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
-  //float xprev[3];
-  float vprev=0.0;
+  float xprev[3];
+  //float vprev=0.0;
   //void interact_options(bool);
   
   //SAC parameters,variables, and setup
@@ -103,22 +103,22 @@ class ImpedeSimulator{
   };
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
-      if(initcon==false)
-        {syst1.Xcurr = {-3.1,state.pose.position.x,0.,0.}; 
-         initcon=true;
-         //xprev[0]=state.pose.position.x;xprev[1]=state.pose.position.x;
-         //xprev[2]=state.pose.position.x;
-        };
-      
       currstate.sys_time = (ros::Time::now() - t0).toSec();
       currstate.ef = {(float)state.pose.position.x,(float)state.pose.position.y,(float)state.pose.position.z};
-      //xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=(float)state.pose.position.x;
-      float acc = (state.twist.linear.x-vprev)/DT;//(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);
-      vprev=state.twist.linear.x;
-      syst1.Ucurr = {acc}; 
-      //syst1.Xcurr = {-3.1, 0.0,0.0,0.0};
-      currstate.q = {(float)syst1.Xcurr[0],(float)syst1.Xcurr[1]};
+      if(initcon==false)
+        {syst1.Xcurr = {PI,0.,state.pose.position.y,0.}; syst1.Ucurr={0.0}; 
+         initcon=true;ROS_INFO("Initcon set");
+         xprev[0]=state.pose.position.y;xprev[1]=state.pose.position.y;xprev[2]=state.pose.position.y;
+        };      
+      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=(float)state.pose.position.y;
+      float acc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);//(state.twist.linear.x-vprev)/DT;
+      //vprev=state.twist.linear.x;
+      
+      currstate.q = {(float)syst1.Xcurr[0],(float)syst1.Xcurr[2]};
+      //cout<<syst1.Xcurr[0]<<"   "<<currstate.q[0]<<endl;
       currstate.dq = {(float)state.twist.linear.x,(float)state.twist.linear.y,(float)state.twist.linear.z};
+      syst1.Ucurr = {acc}; 
+      syst1.step();
       //currstate.ddq =
       //currstate.sac = 
       currstate.u = {(float)state.wrench.force.x,(float)state.wrench.force.y,(float)state.wrench.force.z};

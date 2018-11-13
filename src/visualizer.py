@@ -50,15 +50,16 @@ class Visualizer_CP:
         self.markers.markers.append(self.link_marker)
         self.markers.markers.append(self.cart_marker)
     def update_marks(self,data):
-        ptransc = [data.ef[0],data.ef[1],data.ef[2]]#data.ef[0] is the cart coord
-        ptransm = [data.ef[0],data.ef[1]+np.sin(data.q[0]),data.ef[2]+np.cos(data.q[0])]
+        ptransc = [0.0,data.ef[1],0.0]#data.ef[1] is the cart coord
+        ptransm = [0.0,data.q[1]+np.sin(data.q[0]),np.cos(data.q[0])]
+        psim = [0.0,data.q[1],0.0]
         p = PointStamped()
         p.header.stamp = rospy.Time.now()
         p.header.frame_id = SIMFRAME
         for m in self.markers.markers:
             m.header.stamp = p.header.stamp
-        p1 = GM.Point(*ptransc)
-        self.cart_marker.pose = GM.Pose(position=p1)
+        p1 = GM.Point(*psim)
+        self.cart_marker.pose = GM.Pose(position=GM.Point(*ptransc))
         p2 = GM.Point(*ptransm)
         self.mass_marker.pose=GM.Pose(position=p2)
         self.link_marker.points = [p1, p2]
