@@ -144,7 +144,10 @@ class ImpedeSimulator{
     interactopt.K_impedance = {0,0,1300,100,100,100};
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
-    if(reject==true)interactopt.D_impedance = {0.0,45.0,50.,2.,2.,2.};
+    if(reject==true){
+        if(arma::as_scalar(sacsys->ulist.col(0))>0){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
+        else{interactopt.D_impedance = {0.0,45.0,50.,2.,2.,2.};};
+    }
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
     interactopt.interaction_frame.position.x = 0;
