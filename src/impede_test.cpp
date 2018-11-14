@@ -42,8 +42,8 @@ SERVICES:
 using namespace std;
 
 const double DT=1./100.;
-const double SCALE = 3.0;
-const double Kv = 100.0;
+const double SCALE = 4.0;
+const double Kv = 150.0;
 
 template <class system, class objective,class sac>
 class ImpedeSimulator{
@@ -65,14 +65,16 @@ class ImpedeSimulator{
   float endeffv = 0.0;
   //float vprev=0.0;
   //void interact_options(bool);
-  
   //SAC parameters,variables, and setup
   sawyer_humcpp::mdasys currstate;
-  
-  
   //sac<CartPend,errorcost<CartPend> sacsys{&syst1,&cost,0.,1.0,umax,unom};
   bool initcon=false;
   //intera_core_msgs::EndpointState initcon;
+  
+  inline float sign(float x){
+    if(x>=0) return 1.;
+    if(x<0) return -1.;
+  };
     
     
     
@@ -94,7 +96,10 @@ class ImpedeSimulator{
     tcurr = ros::Time::now() - t0;
     interact_options(true);
     if(currstate.accept){interact_options(false);veld=endeffv;}//ROS_INFO("UnLocked");}
-      else{interact_options(true);cout<<Kv*(endeffv-veld)<<endl;};
+      else{interact_options(true);
+            //if(abs(Kv*(endeffv-veld))>5.0){
+            //cout<<sign(endeffv-veld)*Kv*(endeffv-veld)*(endeffv-veld)<<endl;}
+            };
     interactCommand.publish(interactopt);
     
     //ROS_INFO("Time Now: %f",tcurr.toSec());
@@ -136,10 +141,10 @@ class ImpedeSimulator{
     interactopt.header.frame_id = "base";
     interactopt.interaction_control_active = true;
     interactopt.interaction_control_mode = {1,1,1,1,1,1};
-    interactopt.K_impedance = {0,0,1300,30,30,30};
+    interactopt.K_impedance = {0,0,1300,100,100,100};
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
-    if(reject==true)interactopt.D_impedance = {0.0,Kv*(endeffv-veld),50.,2.,2.,2.};
+    if(reject==true)interactopt.D_impedance = {0.0,45.0,50.,2.,2.,2.};
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
     interactopt.interaction_frame.position.x = 0;
@@ -180,7 +185,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "impede_test");
   ros::NodeHandle n;
   ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>> sim(&n,&syst1,&cost,&sacsys1,&filt);
-  ros::Timer timer = n.createTimer(ros::Duration(DT), &ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>>::timercall, &sim);
+  ros::Timer timer = n.createTimer(ros::Duration(DT*4), &ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>>::timercall, &sim);
   ros::spin();
  return 0;
 };
