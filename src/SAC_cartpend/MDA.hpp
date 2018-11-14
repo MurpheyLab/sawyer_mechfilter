@@ -12,15 +12,15 @@ class mda{
     mda(double _gamma,bool _replace){gamma = _gamma;replace = _replace;};
     
     
-    arma::vec filter(const arma::vec& uc,const arma::vec& user){
+    bool filter(const arma::vec& uc,const arma::vec& user){
         double dotprod = arma::as_scalar(dot(uc,user));
         double phi=acos(dotprod/(arma::norm(uc)*arma::norm(user)));
-        arma::vec ucurr;
+        arma::vec ucurr;bool accept=false;
         if(dotprod>0 && abs(phi)<=gamma){
-            ucurr = user;
+            ucurr = user;accept=true;
             }else if(replace==true) {ucurr = uc;
                 }else {ucurr = arma::zeros(size(uc));}
-     return ucurr;}
+     return accept;}
 };
 
 #endif

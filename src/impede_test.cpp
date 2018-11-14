@@ -38,6 +38,7 @@ SERVICES:
 #include"SAC_cartpend/SAC.hpp"
 #include"SAC_cartpend/rk4_int.hpp"
 #include "sawyer_humcpp/mdasys.h"
+#include"SAC_cartpend/MDA.hpp"
 using namespace std;
 
 const double DT=1./100.;
@@ -48,6 +49,7 @@ class ImpedeSimulator{
   system* sys; 
   objective* cost;
   sac* sacsys;
+  mda* demon;
   ros::Time t0 = ros::Time::now();
   ros::Duration tcurr=ros::Duration(0);
   ros::NodeHandle* nh;
@@ -73,8 +75,8 @@ class ImpedeSimulator{
     
   public:
   
-  ImpedeSimulator(ros::NodeHandle* _nh,system *_sys, objective *_cost,sac *_sacsys){
-      nh=_nh;sys = _sys; cost=_cost;sacsys=_sacsys;
+  ImpedeSimulator(ros::NodeHandle* _nh,system *_sys, objective *_cost,sac *_sacsys,mda *_demon){
+      nh=_nh;sys = _sys; cost=_cost;sacsys=_sacsys;demon=_demon;
     ROS_INFO("Creating ImpedeSimulator class");
     //setup publishers & subscribers
     mda_pub = nh->advertise<sawyer_humcpp::mdasys>("mda_topic", 5);  
@@ -94,10 +96,8 @@ class ImpedeSimulator{
     else if(tcurr.toSec()>12.){interact_options(false);}//ROS_INFO("UnLocked");}
     else if(tcurr.toSec()>10.){interact_options(true); }//ROS_INFO("Locked");} 
     else{interact_options(false);};
-    interactCommand.publish(interactopt); 
-    //currstate.sac = 
-    //curr.accept = 
-    mda_pub.publish(currstate);
+    interactCommand.publish(interactopt);
+    
     //ROS_INFO("Time Now: %f",tcurr.toSec());
   };
   //state update from end effector
@@ -120,9 +120,11 @@ class ImpedeSimulator{
       currstate.ddq = {(float)xdot(1),(float)xdot(3)};
       sys->Ucurr = {acc}; 
       sys->step();
-      
-    
-  };
+      sacsys->SAC_calc();
+      currstate.sac = {(float)sacsys->ulist(0)};
+      currstate.accept = demon->filter(sacsys->ulist.col(0),sys->Ucurr);
+      mda_pub.publish(currstate);
+};
   //state update from end effector
   void calc_input(const sensor_msgs::Imu& imu){
     //ROS_INFO("Got the Acc");
@@ -172,11 +174,12 @@ int main(int argc, char **argv){
   arma::vec umax = {20};
   errorcost<CartPend> cost{Q,R,xd,&syst1};
   sac<CartPend,errorcost<CartPend>> sacsys1 (&syst1,&cost,0.,1.0,umax,unom); 
+  mda filt(PI/2, false);
   /*Run the main loop, by instatiating a System class, and then
     calling ros::spin*/
   ros::init(argc, argv, "impede_test");
   ros::NodeHandle n;
-  ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>> sim(&n,&syst1,&cost,&sacsys1);
+  ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>> sim(&n,&syst1,&cost,&sacsys1,&filt);
   ros::Timer timer = n.createTimer(ros::Duration(DT), &ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>>::timercall, &sim);
   ros::spin();
  return 0;
