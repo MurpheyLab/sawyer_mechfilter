@@ -41,8 +41,13 @@ SERVICES:
 using namespace std;
 
 const double DT=1./100.;
+const double SCALE = 2.0;
 
+template <class system, class objective,class sac>
 class ImpedeSimulator{
+  system* sys; 
+  objective* cost;
+  sac* sacsys;
   ros::Time t0 = ros::Time::now();
   ros::Duration tcurr=ros::Duration(0);
   ros::NodeHandle* nh;
@@ -58,33 +63,25 @@ class ImpedeSimulator{
   
   //SAC parameters,variables, and setup
   sawyer_humcpp::mdasys currstate;
-  arma::vec xd(double t){
-    return arma::zeros(4);};
-  arma::vec unom(double t){
-    return arma::zeros(1);};
-    CartPend syst1{0.1,0.1,9.81,2.0,0.01};
-    arma::mat Q = {
-        {200,0.,0.,0.},
-        {0., 0.,0.,0.},
-        {0.,0.,20.,0.},
-        {0.,0.,0.,1.}};
-    arma::mat R = 0.3*arma::eye(1,1);
-    arma::vec umax = {20};
-    bool initcon=false;
-    //intera_core_msgs::EndpointState initcon;
+  
+  
+  //sac<CartPend,errorcost<CartPend> sacsys{&syst1,&cost,0.,1.0,umax,unom};
+  bool initcon=false;
+  //intera_core_msgs::EndpointState initcon;
     
     
     
   public:
-  ImpedeSimulator(ros::NodeHandle* _nh){
-      nh=_nh;
+  
+  ImpedeSimulator(ros::NodeHandle* _nh,system *_sys, objective *_cost,sac *_sacsys){
+      nh=_nh;sys = _sys; cost=_cost;sacsys=_sacsys;
     ROS_INFO("Creating ImpedeSimulator class");
     //setup publishers & subscribers
     mda_pub = nh->advertise<sawyer_humcpp::mdasys>("mda_topic", 5);  
     interactCommand = nh->advertise<intera_core_msgs::InteractionControlCommand>("/robot/limb/right/interaction_control_command",1);
     cursor_state = nh->subscribe("/robot/limb/right/endpoint_state",5,&ImpedeSimulator::update_state,this);
     end_acc = nh->subscribe("/robot/accelerometer/right_accelerometer/state",5,&ImpedeSimulator::calc_input,this);
-    
+    //ImpedeSimulator:cost(Q,R,xd,&syst1) {};
     };
   
   //set up timer callback fxn
@@ -98,32 +95,33 @@ class ImpedeSimulator{
     else if(tcurr.toSec()>10.){interact_options(true); }//ROS_INFO("Locked");} 
     else{interact_options(false);};
     interactCommand.publish(interactopt); 
-    
+    //currstate.sac = 
+    //curr.accept = 
+    mda_pub.publish(currstate);
     //ROS_INFO("Time Now: %f",tcurr.toSec());
   };
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
       currstate.sys_time = (ros::Time::now() - t0).toSec();
-      currstate.ef = {(float)state.pose.position.x,(float)state.pose.position.y,(float)state.pose.position.z};
+      currstate.u = {(float)state.wrench.force.y};
+      currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
       if(initcon==false)
-        {syst1.Xcurr = {PI,0.,state.pose.position.y,0.}; syst1.Ucurr={0.0}; 
+        {sys->Xcurr = {PI,0.,SCALE*state.pose.position.y,0.}; sys->Ucurr={0.0}; 
          initcon=true;ROS_INFO("Initcon set");
-         xprev[0]=state.pose.position.y;xprev[1]=state.pose.position.y;xprev[2]=state.pose.position.y;
+         xprev[0]=SCALE*state.pose.position.y;
+         xprev[1]=SCALE*state.pose.position.y;
+         xprev[2]=SCALE*state.pose.position.y;
         };      
-      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=(float)state.pose.position.y;
-      float acc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);//(state.twist.linear.x-vprev)/DT;
-      //vprev=state.twist.linear.x;
+      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*(float)state.pose.position.y;
+      float acc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);      
+      currstate.q = {(float)sys->Xcurr[0],(float)sys->Xcurr[2]};
+      arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
+      currstate.dq = {(float)xdot(0),(float)xdot(2)};
+      currstate.ddq = {(float)xdot(1),(float)xdot(3)};
+      sys->Ucurr = {acc}; 
+      sys->step();
       
-      currstate.q = {(float)syst1.Xcurr[0],(float)syst1.Xcurr[2]};
-      //cout<<syst1.Xcurr[0]<<"   "<<currstate.q[0]<<endl;
-      currstate.dq = {(float)state.twist.linear.x,(float)state.twist.linear.y,(float)state.twist.linear.z};
-      syst1.Ucurr = {acc}; 
-      syst1.step();
-      //currstate.ddq =
-      //currstate.sac = 
-      currstate.u = {(float)state.wrench.force.x,(float)state.wrench.force.y,(float)state.wrench.force.z};
-      //curr.accept = 
-    mda_pub.publish(currstate);
+    
   };
   //state update from end effector
   void calc_input(const sensor_msgs::Imu& imu){
@@ -159,13 +157,27 @@ class ImpedeSimulator{
         
 };
     
+arma::vec xd(double t){
+    return arma::zeros(4);};
+  arma::vec unom(double t){
+    return arma::zeros(1);};
 int main(int argc, char **argv){
+  CartPend syst1{0.1,0.1,9.81,2.0,0.01};
+  arma::mat Q = {
+    {200,0.,0.,0.},
+    {0., 0.,0.,0.},
+    {0.,0.,20.,0.},
+    {0.,0.,0.,1.}};
+  arma::mat R = 0.3*arma::eye(1,1);
+  arma::vec umax = {20};
+  errorcost<CartPend> cost{Q,R,xd,&syst1};
+  sac<CartPend,errorcost<CartPend>> sacsys1 (&syst1,&cost,0.,1.0,umax,unom); 
   /*Run the main loop, by instatiating a System class, and then
     calling ros::spin*/
   ros::init(argc, argv, "impede_test");
   ros::NodeHandle n;
-  ImpedeSimulator sim(&n);
-  ros::Timer timer = n.createTimer(ros::Duration(DT), &ImpedeSimulator::timercall, &sim);
+  ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>> sim(&n,&syst1,&cost,&sacsys1);
+  ros::Timer timer = n.createTimer(ros::Duration(DT), &ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>>::timercall, &sim);
   ros::spin();
  return 0;
 };
