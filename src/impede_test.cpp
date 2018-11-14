@@ -42,7 +42,8 @@ SERVICES:
 using namespace std;
 
 const double DT=1./100.;
-const double SCALE = 2.0;
+const double SCALE = 3.0;
+const double Kv = 100.0;
 
 template <class system, class objective,class sac>
 class ImpedeSimulator{
@@ -60,6 +61,8 @@ class ImpedeSimulator{
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
   float xprev[3];
+  float veld = 0.0;
+  float endeffv = 0.0;
   //float vprev=0.0;
   //void interact_options(bool);
   
@@ -89,19 +92,16 @@ class ImpedeSimulator{
   //set up timer callback fxn
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
-    if(tcurr.toSec()>26.){interact_options(false);}//ROS_INFO("UnLocked");}
-    else if(tcurr.toSec()>25.){interact_options(true);}//ROS_INFO("Locked");}
-    else if(tcurr.toSec()>17.){interact_options(false);}//ROS_INFO("UnLocked");}
-    else if(tcurr.toSec()>16.){interact_options(true);}//ROS_INFO("Locked");}
-    else if(tcurr.toSec()>12.){interact_options(false);}//ROS_INFO("UnLocked");}
-    else if(tcurr.toSec()>10.){interact_options(true); }//ROS_INFO("Locked");} 
-    else{interact_options(false);};
+    interact_options(true);
+    if(currstate.accept){interact_options(false);veld=endeffv;}//ROS_INFO("UnLocked");}
+      else{interact_options(true);cout<<Kv*(endeffv-veld)<<endl;};
     interactCommand.publish(interactopt);
     
     //ROS_INFO("Time Now: %f",tcurr.toSec());
   };
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
+      endeffv = (float)state.twist.linear.y;
       currstate.sys_time = (ros::Time::now() - t0).toSec();
       currstate.u = {(float)state.wrench.force.y};
       currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
@@ -139,7 +139,7 @@ class ImpedeSimulator{
     interactopt.K_impedance = {0,0,1300,30,30,30};
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
-    if(reject==true)interactopt.D_impedance = {10.,10.,50.,2.,2.,2.};
+    if(reject==true)interactopt.D_impedance = {0.0,Kv*(endeffv-veld),50.,2.,2.,2.};
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
     interactopt.interaction_frame.position.x = 0;
