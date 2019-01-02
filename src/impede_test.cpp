@@ -55,7 +55,6 @@ class ImpedeSimulator{
   ros::Duration tcurr=ros::Duration(0);
   ros::NodeHandle* nh;
   intera_core_msgs::InteractionControlCommand interactopt;
-  //setup publishers, subscribers:
   ros::Publisher interactCommand;
   ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
@@ -63,21 +62,10 @@ class ImpedeSimulator{
   float xprev[3];
   float veld = 0.0;
   float endeffv = 0.0;
-  //float vprev=0.0;
-  //void interact_options(bool);
-  //SAC parameters,variables, and setup
   sawyer_humcpp::mdasys currstate;
-  //sac<CartPend,errorcost<CartPend> sacsys{&syst1,&cost,0.,1.0,umax,unom};
   bool initcon=false;
-  //intera_core_msgs::EndpointState initcon;
   
-  inline float sign(float x){
-    if(x>=0) return 1.;
-    if(x<0) return -1.;
-  };
-    
-    
-    
+  
   public:
   
   ImpedeSimulator(ros::NodeHandle* _nh,system *_sys, objective *_cost,sac *_sacsys,mda *_demon){
@@ -88,22 +76,20 @@ class ImpedeSimulator{
     interactCommand = nh->advertise<intera_core_msgs::InteractionControlCommand>("/robot/limb/right/interaction_control_command",1);
     cursor_state = nh->subscribe("/robot/limb/right/endpoint_state",5,&ImpedeSimulator::update_state,this);
     end_acc = nh->subscribe("/robot/accelerometer/right_accelerometer/state",5,&ImpedeSimulator::calc_input,this);
-    //ImpedeSimulator:cost(Q,R,xd,&syst1) {};
+    
     };
   
   //set up timer callback fxn
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
-    interact_options(true);
+    if(initcon==false) {return;};
     if(currstate.accept){interact_options(false);veld=endeffv;}//ROS_INFO("UnLocked");}
-      else{interact_options(true);
-            //if(abs(Kv*(endeffv-veld))>5.0){
-            //cout<<sign(endeffv-veld)*Kv*(endeffv-veld)*(endeffv-veld)<<endl;}
-            };
+      else{interact_options(true);};
     interactCommand.publish(interactopt);
     
     //ROS_INFO("Time Now: %f",tcurr.toSec());
   };
+  
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
       endeffv = (float)state.twist.linear.y;
@@ -129,11 +115,13 @@ class ImpedeSimulator{
       currstate.sac = {(float)sacsys->ulist(0)};
       currstate.accept = demon->filter(sacsys->ulist.col(0),sys->Ucurr);
       mda_pub.publish(currstate);
+      
 };
-  //state update from end effector
+  
   void calc_input(const sensor_msgs::Imu& imu){
     //ROS_INFO("Got the Acc");
   };
+  
   //setting the impedance of the interaction options message
   void interact_options(bool reject){
     interactopt.header.stamp = ros::Time::now();
@@ -145,8 +133,8 @@ class ImpedeSimulator{
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
     if(reject==true){
-        if(arma::as_scalar(sacsys->ulist.col(0))>0){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
-        else{interactopt.D_impedance = {0.0,45.0,50.,2.,2.,2.};};
+        if(currstate.ddq[1]*currstate.dq[1]<0.){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
+        else{interactopt.D_impedance = {0.0,60.0,50.,2.,2.,2.};};
     }
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};

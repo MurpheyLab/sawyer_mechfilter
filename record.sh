@@ -44,8 +44,8 @@ read -n 1 -s
 echo "Beginning recording..."
 # Start recording bag file:
 rosbag record --quiet -O ${filename}.bag -e "(.*)/robot/accelerometer/right_accelerometer/state" \
-    "(.*)/robot/limb/right/endpoint_state"& #"(.*)trep_sys" "(.*)cursor_state" \
-    #"(.*)visualization_marker_array" "(.*)acceptance"&
+    "(.*)/robot/limb/right/endpoint_state" "(.*)/robot/limb/right/interaction_control_command" "(.*)mda_topic" \
+    "(.*)visualization_marker_array"& #"(.*)acceptance"&
 
 sleep 1
 echo "Now press any button to stop recording..."
@@ -59,12 +59,12 @@ echo "Generating csv file..."
 info=`rosbag info ${filename}.bag`
 endpoint=`echo $info | grep -e '\ \/[^ ]*' -o |grep -e '/robot/limb/right/endpoint_state'`
 imu=`echo $info | grep -e '\ \/[^ ]*' -o |grep -e '/robot/accelerometer/right_accelerometer/state'`
-#cursor=`echo $info | grep -e '\ \/[^ ]*' -o |grep -e 'cursor_state'`
-#trep=`echo $info | grep -e '\ \/[^ ]*' -o |grep -e 'trep_sys'`
-#mda=`echo $info | grep -e '\ \/[^ ]*' -o |grep -e 'acceptance'`
+interaction=`echo $info | grep -e '\ \/[^ ]*' -o |grep -e '/robot/limb/right/interaction_control_command'`
+mda=`echo $info | grep -e '\ \/[^ ]*' -o |grep -e 'mda_topic'`
+
 rostopic echo -p -b ${filename}.bag $endpoint > ${filename}_ep.txt 
 rostopic echo -p -b ${filename}.bag $imu > ${filename}_imu.csv 
-#rostopic echo -p -b ${filename}.bag $mass > ${filename}_mass.txt 
-#rostopic echo -p -b ${filename}.bag $trep > ${filename}_trep.csv 
+rostopic echo -p -b ${filename}.bag $interaction > ${filename}_interact.txt 
+rostopic echo -p -b ${filename}.bag $mda > ${filename}_mda.csv 
 #rostopic echo -p -b ${filename}.bag $mda > ${filename}_mda.txt 
 echo "Done creating bag and csv file"
