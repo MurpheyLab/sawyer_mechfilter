@@ -1,0 +1,19 @@
+<launch>
+  <!-- ARGUMENT DEFINITIONS -->
+  <arg name="vis" default="false" /> <!-- run rviz? -->
+  
+    <!-- startup simulator node -->
+    <node pkg="sawyer_humcpp" type="draw_test" name="draw_test"
+	  respawn="true" output="screen" />
+    <node pkg="sawyer_humcpp" type="cursor.py" name="cursor"
+	  respawn="true" output="screen" />
+    
+  <!-- rviz if needed -->
+  <group if="$(arg vis)">
+    <node pkg="rviz" type="rviz" respawn="false" name="rviz" 
+	  args="-d $(find sawyer_humcpp)/launch/trep_act3d_config.rviz" />
+  </group>
+
+</launch>
+
+  

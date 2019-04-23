@@ -43,6 +43,11 @@ add_executable(impede_test src/impede_test.cpp)
 add_dependencies(impede_test ${catkin_EXPORTED_TARGETS})
 target_link_libraries(impede_test ${catkin_LIBRARIES} armadillo)
 
+add_executable(draw_test src/draw_test.cpp)
+add_dependencies(draw_test ${catkin_EXPORTED_TARGETS})
+target_link_libraries(draw_test ${catkin_LIBRARIES} armadillo)
+
+
 #add_executable(visualizer src/visualizer.cpp)
 #add_dependencies(visualizer ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(visualizer ${catkin_LIBRARIES})
