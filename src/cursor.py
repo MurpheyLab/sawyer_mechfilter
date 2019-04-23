@@ -34,7 +34,20 @@ class Visualizer_Cursor:
         self.mass_marker.type = VM.Marker.SPHERE
         self.mass_marker.id = 0
         
+        self.draw_marker = VM.Marker()
+        self.draw_marker.action = VM.Marker.ADD
+        self.draw_marker.color = ColorRGBA(*[1.0, 1.0, 1.0, 1.0])
+        self.draw_marker.header.frame_id = rospy.get_namespace() + SIMFRAME 
+        self.draw_marker.lifetime = rospy.Duration(100*DT)
+        self.draw_marker.scale = GM.Vector3(*[0.05, 0.05, 0.05])
+        self.draw_marker.type = VM.Marker.POINTS
+        self.draw_marker.id = 1
+        
         self.markers.markers.append(self.mass_marker)
+        self.markers.markers.append(self.draw_marker)
+        
+        #set up subsampling of points
+        self.subsamp = 0
         
     def update_marks(self,data):
         ptransc = [data.ef[0],data.ef[1],data.ef[2]]#data.ef[1] is the cart coord
@@ -43,6 +56,13 @@ class Visualizer_Cursor:
         p.header.frame_id = SIMFRAME
         for m in self.markers.markers:
             m.header.stamp = p.header.stamp
+        if self.subsamp == 0:    
+            self.draw_marker.points.append(GM.Point(*ptransc))
+            self.subsamp +=1
+        elif self.subsamp == 50:
+            self.subsamp = 0
+        else:
+            self.subsamp+=1
         self.mass_marker.pose = GM.Pose(position=GM.Point(*ptransc))
         self.marker_pub.publish(self.markers)
                 
