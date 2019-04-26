@@ -93,9 +93,11 @@ class ImpedeSimulator{
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
       currstate.sys_time = (ros::Time::now() - t0).toSec();
-      currstate.u = {(float)state.wrench.force.x,SCALE*(float)q_acc.y()};
-      currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
       q_ep.setValue(state.pose.orientation.x,state.pose.orientation.y,state.pose.orientation.z,state.pose.orientation.w);
+      tf2::Quaternion q_ep_force; q_ep_force.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
+      q_ep_force = q_ep*q_ep_force*q_ep.inverse();
+      currstate.u = {q_ep_force.y(),SCALE*q_acc.y()};
+      currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
       if(initcon==false)
         {sys->Xcurr = {PI,0.,SCALE*state.pose.position.y,0.}; sys->Ucurr={0.0}; 
          initcon=true;ROS_INFO("Initcon set");
@@ -119,9 +121,8 @@ class ImpedeSimulator{
 };
   
   void calc_input(const sensor_msgs::Imu& imu){
-    tf2::Quaternion q_a_temp,q_ep_conj;
+    tf2::Quaternion q_a_temp;
     q_a_temp.setValue(imu.linear_acceleration.x,imu.linear_acceleration.y,imu.linear_acceleration.z,0.0);
-    q_ep_conj = q_ep.inverse();
     q_acc = q_ep*q_a_temp*q_ep.inverse();   
     
   };
@@ -136,10 +137,10 @@ class ImpedeSimulator{
     interactopt.K_impedance = {0,0,1300,100,100,100};
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
-    //if(reject==true){
-    //    if(currstate.ddq[1]*currstate.dq[1]<0.){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
-    //    else{interactopt.D_impedance = {0.0,60.0,50.,2.,2.,2.};};
-    //}
+    if(reject==true){
+        if(currstate.ddq[1]*currstate.dq[1]<0.){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
+        else{interactopt.D_impedance = {0.0,60.0,50.,2.,2.,2.};};
+    }
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
     interactopt.interaction_frame.position.x = 0;
