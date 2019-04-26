@@ -23,6 +23,7 @@ SERVICES:
 #include <iostream>
 #include <ros/console.h>
 #include <geometry_msgs/Pose.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <intera_core_msgs/InteractionControlCommand.h>
 #include <intera_core_msgs/EndpointState.h>
 #include <sensor_msgs/Imu.h>
@@ -60,9 +61,8 @@ class ImpedeSimulator{
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
   float xprev[3];
-  float veld = 0.0;
-  float endeffv = 0.0;
   sawyer_humcpp::mdasys currstate;
+  tf2::Quaternion q_acc, q_ep;
   bool initcon=false;
   
   
@@ -83,7 +83,7 @@ class ImpedeSimulator{
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
     if(initcon==false) {return;};
-    if(currstate.accept){interact_options(false);veld=endeffv;}//ROS_INFO("UnLocked");}
+    if(currstate.accept){interact_options(false);}//ROS_INFO("UnLocked");}
       else{interact_options(true);};
     interactCommand.publish(interactopt);
     
@@ -92,34 +92,38 @@ class ImpedeSimulator{
   
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
-      endeffv = (float)state.twist.linear.y;
       currstate.sys_time = (ros::Time::now() - t0).toSec();
-      currstate.u = {(float)state.wrench.force.y};
+      currstate.u = {(float)state.wrench.force.x,SCALE*(float)q_acc.y()};
       currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
+      q_ep.setValue(state.pose.orientation.x,state.pose.orientation.y,state.pose.orientation.z,state.pose.orientation.w);
       if(initcon==false)
         {sys->Xcurr = {PI,0.,SCALE*state.pose.position.y,0.}; sys->Ucurr={0.0}; 
          initcon=true;ROS_INFO("Initcon set");
          xprev[0]=SCALE*state.pose.position.y;
          xprev[1]=SCALE*state.pose.position.y;
          xprev[2]=SCALE*state.pose.position.y;
-        };      
-      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*(float)state.pose.position.y;
-      float acc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);      
+      };      
+      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*(float)state.pose.position.y;    
       currstate.q = {(float)sys->Xcurr[0],(float)sys->Xcurr[2]};
       arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
       currstate.dq = {(float)xdot(0),(float)xdot(2)};
       currstate.ddq = {(float)xdot(1),(float)xdot(3)};
-      sys->Ucurr = {acc}; 
+      sys->Ucurr = {-(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT)}; 
       sys->step();
       sacsys->SAC_calc();
       currstate.sac = {(float)sacsys->ulist(0)};
-      currstate.accept = demon->filter(sacsys->ulist.col(0),sys->Ucurr);
+      arma::vec tempu = {(float)state.wrench.force.x};
+      currstate.accept = demon->filter(sacsys->ulist.col(0),tempu);//sys->Ucurr);
       mda_pub.publish(currstate);
       
 };
   
   void calc_input(const sensor_msgs::Imu& imu){
-    //ROS_INFO("Got the Acc");
+    tf2::Quaternion q_a_temp,q_ep_conj;
+    q_a_temp.setValue(imu.linear_acceleration.x,imu.linear_acceleration.y,imu.linear_acceleration.z,0.0);
+    q_ep_conj = q_ep.inverse();
+    q_acc = q_ep*q_a_temp*q_ep.inverse();   
+    
   };
   
   //setting the impedance of the interaction options message
@@ -132,10 +136,10 @@ class ImpedeSimulator{
     interactopt.K_impedance = {0,0,1300,100,100,100};
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
-    if(reject==true){
-        if(currstate.ddq[1]*currstate.dq[1]<0.){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
-        else{interactopt.D_impedance = {0.0,60.0,50.,2.,2.,2.};};
-    }
+    //if(reject==true){
+    //    if(currstate.ddq[1]*currstate.dq[1]<0.){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
+    //    else{interactopt.D_impedance = {0.0,60.0,50.,2.,2.,2.};};
+    //}
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
     interactopt.interaction_frame.position.x = 0;
