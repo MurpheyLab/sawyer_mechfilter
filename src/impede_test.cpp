@@ -62,7 +62,7 @@ class ImpedeSimulator{
   ros::Subscriber end_acc;
   float xprev[3];
   sawyer_humcpp::mdasys currstate;
-  tf2::Quaternion q_acc, q_ep;
+  tf2::Quaternion q_acc, q_ep,q_ep_force;
   bool initcon=false;
   
   
@@ -83,7 +83,7 @@ class ImpedeSimulator{
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
     if(initcon==false) {return;};
-    if(currstate.accept){interact_options(false);}//ROS_INFO("UnLocked");}
+    if(currstate.accept){interact_options(true);}//ROS_INFO("UnLocked");}
       else{interact_options(true);};
     interactCommand.publish(interactopt);
     
@@ -94,8 +94,8 @@ class ImpedeSimulator{
   void update_state(const intera_core_msgs::EndpointState& state){
       currstate.sys_time = (ros::Time::now() - t0).toSec();
       q_ep.setValue(state.pose.orientation.x,state.pose.orientation.y,state.pose.orientation.z,state.pose.orientation.w);
-      tf2::Quaternion q_ep_force; q_ep_force.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
-      q_ep_force = q_ep*q_ep_force*q_ep.inverse();
+      tf2::Quaternion q_force_temp; q_force_temp.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
+      q_ep_force = q_ep*q_force_temp*q_ep.inverse();
       currstate.u = {q_ep_force.y(),SCALE*q_acc.y()};
       currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
       if(initcon==false)
@@ -133,16 +133,17 @@ class ImpedeSimulator{
     interactopt.header.seq=1;
     interactopt.header.frame_id = "base";
     interactopt.interaction_control_active = true;
-    interactopt.interaction_control_mode = {1,1,1,1,1,1};
+    interactopt.interaction_control_mode = {1,2,1,1,1,1};
     interactopt.K_impedance = {0,0,1300,100,100,100};
     interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
-    if(reject==true){
-        if(currstate.ddq[1]*currstate.dq[1]<0.){interactopt.D_impedance = {0.0,-20.0,50.,2.,2.,2.};}
-        else{interactopt.D_impedance = {0.0,60.0,50.,2.,2.,2.};};
-    }
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
+    if(reject==true){
+        if(q_ep_force.y()>20.){interactopt.force_command = {0.,-20.,0.,0.,0.,0.};}
+        else if(q_ep_force.y()<-20.){interactopt.force_command = {0.,20.,0.,0.,0.,0.};}
+        else{interactopt.force_command = {0.,-q_ep_force.y(),0.,0.,0.,0.};}
+    }
     interactopt.interaction_frame.position.x = 0;
     interactopt.interaction_frame.position.y =0;
     interactopt.interaction_frame.position.z  =0;
@@ -153,7 +154,7 @@ class ImpedeSimulator{
     interactopt.endpoint_name ="right_hand";
     interactopt.in_endpoint_frame = false;
     interactopt.disable_damping_in_force_control = false;
-    //interactopt.disable_reference_resetting = false;
+    interactopt.disable_reference_resetting = true;
     //if(reject==true)interactopt.disable_reference_resetting = false;
     interactopt.rotations_for_constrained_zeroG = false;
   }; 

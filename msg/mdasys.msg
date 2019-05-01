@@ -1,10 +1,10 @@
 float32 sys_time
 float64[] ef
-float32[] q
-float32[] dq
-float32[] ddq
-float32[] sac
-float32[] u
+float64[] q
+float64[] dq
+float64[] ddq
+float64[] sac
+float64[] u
 bool accept
-float32 bf 
+float64 bf 
 
