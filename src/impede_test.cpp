@@ -61,6 +61,7 @@ class ImpedeSimulator{
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
   float xprev[3];
+  float vd = 0.,vact=0.;
   sawyer_humcpp::mdasys currstate;
   tf2::Quaternion q_acc, q_ep,q_ep_force;
   bool initcon=false;
@@ -83,7 +84,10 @@ class ImpedeSimulator{
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
     if(initcon==false) {return;};
-    if(currstate.accept){interact_options(true);}//ROS_INFO("UnLocked");}
+    if(currstate.accept){
+      interact_options(false);
+      vd = (xprev[2]-xprev[1])/DT;
+    }//ROS_INFO("UnLocked");}
       else{interact_options(true);};
     interactCommand.publish(interactopt);
     
@@ -105,7 +109,8 @@ class ImpedeSimulator{
          xprev[1]=SCALE*state.pose.position.y;
          xprev[2]=SCALE*state.pose.position.y;
       };      
-      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*(float)state.pose.position.y;    
+      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*(float)state.pose.position.y;
+      vact=(xprev[2]-xprev[1])/DT;
       currstate.q = {(float)sys->Xcurr[0],(float)sys->Xcurr[2]};
       arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
       currstate.dq = {(float)xdot(0),(float)xdot(2)};
@@ -114,7 +119,7 @@ class ImpedeSimulator{
       sys->step();
       sacsys->SAC_calc();
       currstate.sac = {(float)sacsys->ulist(0)};
-      arma::vec tempu = {(float)state.wrench.force.x};
+      arma::vec tempu = {SCALE*q_acc.y()};
       currstate.accept = demon->filter(sacsys->ulist.col(0),tempu);//sys->Ucurr);
       mda_pub.publish(currstate);
       
@@ -133,16 +138,15 @@ class ImpedeSimulator{
     interactopt.header.seq=1;
     interactopt.header.frame_id = "base";
     interactopt.interaction_control_active = true;
-    interactopt.interaction_control_mode = {1,2,1,1,1,1};
-    interactopt.K_impedance = {0,0,1300,100,100,100};
-    interactopt.max_impedance = {false,false,true,true,true,true};
+    interactopt.interaction_control_mode = {1,1,1,1,1,1};
+    interactopt.K_impedance = {0,0,1300,1000,1000,1000};
+    interactopt.max_impedance = {true,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
+    //if(vact<-0.1 && vd>0.1){ROS_INFO("sign issue");}
     if(reject==true){
-        if(q_ep_force.y()>20.){interactopt.force_command = {0.,-20.,0.,0.,0.,0.};}
-        else if(q_ep_force.y()<-20.){interactopt.force_command = {0.,20.,0.,0.,0.,0.};}
-        else{interactopt.force_command = {0.,-q_ep_force.y(),0.,0.,0.,0.};}
+        interactopt.D_impedance = {0,50*(vact-vd),8.,0,2,2};//without a gain this maxes out at 6
     }
     interactopt.interaction_frame.position.x = 0;
     interactopt.interaction_frame.position.y =0;
@@ -153,9 +157,8 @@ class ImpedeSimulator{
     interactopt.interaction_frame.orientation.w = 1;
     interactopt.endpoint_name ="right_hand";
     interactopt.in_endpoint_frame = false;
-    interactopt.disable_damping_in_force_control = false;
-    interactopt.disable_reference_resetting = true;
-    //if(reject==true)interactopt.disable_reference_resetting = false;
+    interactopt.disable_damping_in_force_control = true;
+    interactopt.disable_reference_resetting = false;
     interactopt.rotations_for_constrained_zeroG = false;
   }; 
         
@@ -182,7 +185,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "impede_test");
   ros::NodeHandle n;
   ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>> sim(&n,&syst1,&cost,&sacsys1,&filt);
-  ros::Timer timer = n.createTimer(ros::Duration(DT*4), &ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>>::timercall, &sim);
+  ros::Timer timer = n.createTimer(ros::Duration(DT), &ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>>::timercall, &sim);
   ros::spin();
  return 0;
 };
