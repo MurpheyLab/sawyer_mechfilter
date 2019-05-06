@@ -4,6 +4,14 @@ project(sawyer_humcpp)
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #find_package(Armadillo REQUIRED)
 #include_directories(${ARMADILLO_INCLUDE_DIRS})
+#find_package(OpenCV REQUIRED)
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+#include_directories(${ARMADILLO_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${OpenMP_INCLUDE_DIRS})
 
 add_definitions(-std=c++14)
 
@@ -16,7 +24,8 @@ find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs visualizat
   dynamic_reconfigure
   intera_core_msgs
   intera_motion_msgs
-  intera_interface)
+  intera_interface
+  )
 
 add_message_files(FILES mdasys.msg)
 
@@ -45,7 +54,7 @@ target_link_libraries(impede_test ${catkin_LIBRARIES} armadillo)
 
 add_executable(draw_test src/draw_test.cpp)
 add_dependencies(draw_test ${catkin_EXPORTED_TARGETS})
-target_link_libraries(draw_test ${catkin_LIBRARIES} armadillo)
+target_link_libraries(draw_test ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
 
 
 #add_executable(visualizer src/visualizer.cpp)

@@ -1,7 +1,7 @@
 #ifndef RK4_INT_HPP
 #define RK4_INT_HPP
 #include<armadillo>
-#include"cartpend.hpp"
+//#include"cartpend.hpp"
 
 template <class T, class input> arma::vec RK4_step(T *sys, const arma::vec& x, input u, double dt){
   arma::vec k1, k2, k3, k4;

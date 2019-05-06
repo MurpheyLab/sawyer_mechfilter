@@ -34,12 +34,12 @@ SERVICES:
 #include <fstream>
 #include<math.h>
 #include<armadillo>
-#include"SAC_cartpend/cartpend.hpp"
-#include"SAC_cartpend/error_cost.hpp"
-#include"SAC_cartpend/SAC.hpp"
-#include"SAC_cartpend/rk4_int.hpp"
+#include"SAC_MDA/cartpend.hpp"
+#include"SAC_MDA/error_cost.hpp"
+#include"SAC_MDA/SAC.hpp"
+#include"SAC_MDA/rk4_int.hpp"
 #include "sawyer_humcpp/mdasys.h"
-#include"SAC_cartpend/MDA.hpp"
+#include"SAC_MDA/MDA.hpp"
 using namespace std;
 
 const double DT=1./100.;
@@ -87,12 +87,10 @@ class ImpedeSimulator{
     if(currstate.accept){
       interact_options(false);
       vd = (xprev[2]-xprev[1])/DT;
-    }//ROS_INFO("UnLocked");}
+    }
       else{interact_options(true);};
     interactCommand.publish(interactopt);
-    
-    //ROS_INFO("Time Now: %f",tcurr.toSec());
-  };
+   };
   
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
@@ -144,7 +142,7 @@ class ImpedeSimulator{
     interactopt.D_impedance = {0,0,8.,0,2,2};
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {0.,0.,0.,0.,0.,0.};
-    //if(vact<-0.1 && vd>0.1){ROS_INFO("sign issue");}
+    
     if(reject==true){
         interactopt.D_impedance = {0,50*(vact-vd),8.,0,2,2};//without a gain this maxes out at 6
     }

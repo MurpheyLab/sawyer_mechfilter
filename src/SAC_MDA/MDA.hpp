@@ -17,7 +17,7 @@ class mda{
         double phi=acos(dotprod/(arma::norm(uc)*arma::norm(user)));
         arma::vec ucurr;bool accept=false;
         if(dotprod>0 && abs(phi)<=gamma){
-            ucurr = user;accept=true;
+            ucurr = user;accept = true;
             }else if(replace==true) {ucurr = uc;
                 }else {ucurr = arma::zeros(size(uc));}
      return accept;}

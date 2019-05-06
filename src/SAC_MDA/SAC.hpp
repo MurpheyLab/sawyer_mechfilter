@@ -17,7 +17,7 @@ class sac {
   objective* cost; //from cost use cost->dldx, cost->calc_cost
   std::function<arma::vec(double)> unom;
   //algorithm parameters
-  double gamma = -5; double delt_init = 0.5; double beta = 0.55;
+  double gamma = -15; double delt_init = 0.5; double beta = 0.55;
   double tcalc; int kmax = 6; double T;  
   arma::vec umax;
   
@@ -45,7 +45,7 @@ class sac {
   sac(system *_sys, objective *_cost, double _tcalc,double _T,const arma::vec& _umax,std::function<arma::vec(double)> _unom){
     sys = _sys; cost=_cost; tcalc=_tcalc; T=_T;umax = _umax; unom = _unom;
     T_index = T/sys->dt;
-    ulist = arma::zeros(1,T_index); 
+    ulist = arma::zeros(umax.n_rows,T_index); 
     for(int i = 0;i<ulist.n_cols-1;i++) ulist.col(i) = unom(sys->tcurr + (double)i*sys->dt);
   };
     
@@ -68,7 +68,7 @@ void sac<system,objective>::SAC_calc(){
   arma::uword tautemp;
   arma::mat xsol,rhosol;
   arma::mat utemp = ulist;
-  arma::mat usched = arma::zeros<arma::mat>(1,T_index);
+  arma::mat usched = arma::zeros<arma::mat>(umax.n_rows,T_index);
   arma::mat Jtau = arma::zeros<arma::mat>(1,T_index);
   double J1init,J1new,dJmin,alphad,lambda;
           
@@ -77,7 +77,7 @@ void sac<system,objective>::SAC_calc(){
   rhosol = rhoback(xsol, ulist);
   dJmin = 0.;//gamma*J1init
   alphad = gamma*J1init;
-  arma::vec Lam;
+  arma::mat Lam;
   double dJdlam;
   for(int i = 0; i<T_index;i++){
     Lam = sys->hx(xsol.col(i)).t()*rhosol.col(i)*rhosol.col(i).t()*sys->hx(xsol.col(i));
