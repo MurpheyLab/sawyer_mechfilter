@@ -136,12 +136,12 @@ class ImpedeSimulator{
     interactopt.header.seq=1;
     interactopt.header.frame_id = "base";
     interactopt.interaction_control_active = true;
-    interactopt.interaction_control_mode = {1,1,1,1,1,1};
+    interactopt.interaction_control_mode = {1,3,1,1,1,1};
     interactopt.K_impedance = {0,0,1300,1000,1000,1000};
     interactopt.max_impedance = {true,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
-    interactopt.force_command = {0.,0.,0.,0.,0.,0.};
+    interactopt.force_command = {300.,300.,0.,0.,0.,0.};
     
     if(reject==true){
         interactopt.D_impedance = {0,50*(vact-vd),8.,0,2,2};//without a gain this maxes out at 6

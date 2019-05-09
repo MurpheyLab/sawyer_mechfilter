@@ -58,7 +58,7 @@ class ergodicost {
       hk.set_size(K,K); 
       hkfunc(); 
       phik.set_size(K,K); 
-      phikfunc();
+      phikfunc();ROS_INFO("phik set");
       ckpast.zeros(K,K); cktemp.zeros(K,K);
     };
     double l (const arma::vec& x,const arma::vec& u,double ti);

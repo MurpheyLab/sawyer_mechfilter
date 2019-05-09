@@ -170,6 +170,7 @@ class DrawSimulator{
 cv::Mat image;
 //double imgTotal=0.;
 double xbound = 0.5,ybound = 0.5;//2200/2;
+
 double phid(double x1, double x2){
   double ind1 = x2*2200.; double ind2 = x1*2200.;
   double intensity = image.at<uchar>(round(ind1),round(ind2));
@@ -181,18 +182,18 @@ arma::vec unom(double t){
   return arma::zeros(2,1);};
 
 int main(int argc, char **argv){
-  string imageName("apple.png");
+  string imageName("/home/kt-fitz/sawyer_ws/src/sawyer_humcpp/src/apple.png");//need full directory or make sure image is on system PATH
   cv::Mat imagetemp = cv::imread(imageName.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
   image = (cv::Scalar::all(255)-imagetemp);cout<<cv::mean(image)[0]<<"\n";
   cv::flip(image,image,-1);  
+  int rows = imagetemp.rows; 
   DoubleInt syst1 (1./60.);
   arma::mat R = 0.01*arma::eye(2,2); double q=1000.;
   arma::vec umax = {40,40};  
   double T = 1.0;
-  ergodicost<DoubleInt> cost (q,R,10,0,2,phid,xbound,ybound,T,&syst1);ROS_INFO("here");
+  ergodicost<DoubleInt> cost (q,R,10,0,2,phid,xbound,ybound,T,&syst1);
   sac<DoubleInt,ergodicost<DoubleInt>> sacsys1 (&syst1,&cost,0.,T,umax,unom);
   migmda<DoubleInt,ergodicost<DoubleInt>> filt(&sacsys1, false);
-  ROS_INFO("here");
   /*Run the main loop, by instatiating a System class, and then
     calling ros::spin*/
   ros::init(argc, argv, "draw_test");
