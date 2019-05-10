@@ -1,3 +1,8 @@
+//This is a Runge-Kutte integration scheme that takes a class with 
+//dynamics f and evolves it forward in time.
+//Backwards integration can be performed by pass a negative value as
+//the argument for dt.
+
 #ifndef RK4_INT_HPP
 #define RK4_INT_HPP
 #include<armadillo>

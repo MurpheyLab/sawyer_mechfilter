@@ -1,8 +1,15 @@
+//an example class definition for a particular system
+//To define a class that can be used in the template SAC and cost functions,
+//it must include variables Xcurr, Ucurr. It must also have functions for the
+//system dynamics and relevant derivatives named f, dfdx, and hx respectively.
+//Finally, Xcurr should be managed only by this class through the use of a 
+//function called step that evolves the system forward in time by dt seconds.
+
 #ifndef DOUBLEINT_HPP
 #define DOUBLEINT_HPP
 #include<armadillo>
 #include"rk4_int.hpp"
-
+//this constant is not relevant to the dynamics, but is required for ergodic cost functions
 const double PI = 3.1415926535987;
 
 class DoubleInt {

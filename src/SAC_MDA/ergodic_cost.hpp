@@ -1,3 +1,12 @@
+//An example class for defining an objective function for SAC
+//This example defines a quadratic error-based cost function
+//All cost classes must include member functions for the derivative
+//of the incremental cost dldx, and a function to evaluate the total
+//cost over a trajectory and control pair named calc_cost.
+//Member functions defining the desired trajectory xd and the 
+//incremental cost l are recommended but not required for integration
+//into the template function for SAC.
+
 #ifndef ERGODICCOST_HPP
 #define ERGODICCOST_HPP
 #include<armadillo>
@@ -14,7 +23,6 @@ class ergodicost {
   int K;
   inline double trapint(std::function<double(double,double)> f){
     double total = 0.,x0,y0,xf,yf;
-    //x0=-L1,y0=-L2,xf=L1,yf=L2;
     x0=0.,y0=0.,xf=2*L1,yf=2*L2;
     int N1=50,N2=50; double d1=(2.*L1/N1);double d2=(2.*L2/N2);
     total = (d1*d2/4)*(f(x0,y0)+f(x0,yf)+f(xf,y0)+f(xf,yf));

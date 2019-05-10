@@ -144,7 +144,7 @@ class ImpedeSimulator{
     interactopt.force_command = {300.,300.,0.,0.,0.,0.};
     
     if(reject==true){
-        interactopt.D_impedance = {0,50*(vact-vd),8.,0,2,2};//without a gain this maxes out at 6
+        interactopt.D_impedance = {0,50*(vact-vd),8.,0,2,2};
     }
     interactopt.interaction_frame.position.x = 0;
     interactopt.interaction_frame.position.y =0;
