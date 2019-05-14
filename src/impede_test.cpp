@@ -43,7 +43,7 @@ SERVICES:
 using namespace std;
 
 const double DT=1./100.;
-const double SCALE = 4.0;
+const double SCALE = 1.0;
 const double Kv = 150.0;
 
 template <class system, class objective,class sac>
@@ -60,8 +60,8 @@ class ImpedeSimulator{
   ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
-  float xprev[3];
-  float vd = 0.,vact=0.;
+  double xprev[3];
+  double vd = 0.,vact=0.;
   sawyer_humcpp::mdasys currstate;
   tf2::Quaternion q_acc, q_ep,q_ep_force;
   bool initcon=false;
@@ -99,15 +99,15 @@ class ImpedeSimulator{
       tf2::Quaternion q_force_temp; q_force_temp.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
       q_ep_force = q_ep*q_force_temp*q_ep.inverse();
       currstate.u = {q_ep_force.y(),SCALE*q_acc.y()};
-      currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
+      currstate.ef = {SCALE*state.pose.position.x,SCALE*state.pose.position.y,SCALE*state.pose.position.z};
       if(initcon==false)
-        {sys->Xcurr = {PI,0.,SCALE*state.pose.position.y,0.}; sys->Ucurr={0.0}; 
+         {sys->Xcurr = {PI,0.,SCALE*state.pose.position.y,0.}; sys->Ucurr={0.0}; 
          initcon=true;ROS_INFO("Initcon set");
          xprev[0]=SCALE*state.pose.position.y;
          xprev[1]=SCALE*state.pose.position.y;
          xprev[2]=SCALE*state.pose.position.y;
       };      
-      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*(float)state.pose.position.y;
+      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*state.pose.position.y;
       vact=(xprev[2]-xprev[1])/DT;
       currstate.q = {(float)sys->Xcurr[0],(float)sys->Xcurr[2]};
       arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
@@ -167,7 +167,7 @@ arma::vec xd(double t){
   arma::vec unom(double t){
     return arma::zeros(1);};
 int main(int argc, char **argv){
-  CartPend syst1{0.1,0.1,9.81,2.0,0.01};
+  CartPend syst1{0.1,0.1,9.81,2.0,DT};
   arma::mat Q = {
     {200,0.,0.,0.},
     {0., 0.,0.,0.},

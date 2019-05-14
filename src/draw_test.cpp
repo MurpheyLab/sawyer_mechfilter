@@ -44,7 +44,7 @@ SERVICES:
 
 using namespace std;
 
-const double DT=1./100.;
+const double DT=0.01;
 const double SCALE = 1.0;
 const double Kv = 150.0;
 
@@ -62,13 +62,13 @@ class DrawSimulator{
   ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
-  float xprev[3];
-  float yprev[3];
-  float veld = 0.0;
-  float xvd = 0.,yvd = 0, xvact=0.,yvact=0.;
+  double xprev[3];
+  double yprev[3];
+  double veld = 0.0;
+  double xvd = 0.,yvd = 0, xvact=0.,yvact=0.;
   sawyer_humcpp::mdasys currstate;
   tf2::Quaternion q_acc, q_ep,q_ep_force;
-  bool initcon=false;
+  int initcon=0;
   
   
   public:
@@ -99,34 +99,36 @@ class DrawSimulator{
   
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
-      currstate.sys_time = (ros::Time::now() - t0).toSec();
+      currstate.sys_time = sys->tcurr;//(ros::Time::now() - t0).toSec();
       q_ep.setValue(state.pose.orientation.x,state.pose.orientation.y,state.pose.orientation.z,state.pose.orientation.w);
       tf2::Quaternion q_force_temp; q_force_temp.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
       q_ep_force = q_ep*q_force_temp*q_ep.inverse();
-      currstate.u = {SCALE*q_acc.y(), SCALE*q_acc.x()};
-      currstate.ef = {SCALE*(float)state.pose.position.x,SCALE*(float)state.pose.position.y,SCALE*(float)state.pose.position.z};
-      if(initcon==false)
-        {sys->Xcurr = {SCALE*state.pose.position.x,0.,SCALE*state.pose.position.y,0.}; sys->Ucurr={0.0,0.0}; 
-         initcon=true;ROS_INFO("Initcon set");
-         xprev[0]=SCALE*state.pose.position.y; xprev[1]=SCALE*state.pose.position.y; xprev[2]=SCALE*state.pose.position.y;
-         yprev[0]=SCALE*state.pose.position.x;yprev[1]=SCALE*state.pose.position.x; yprev[2]=SCALE*state.pose.position.x;
-        };      
-      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*(float)state.pose.position.y;
-      yprev[0] = yprev[1]; yprev[1]=yprev[2]; yprev[2]=SCALE*(float)state.pose.position.x;
+      //currstate.u = {SCALE*q_acc.x(), SCALE*q_acc.y()};
+      currstate.ef = {SCALE*state.pose.position.x,SCALE*state.pose.position.y,SCALE*state.pose.position.z};
+      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*state.pose.position.x;
+      yprev[0] = yprev[1]; yprev[1]=yprev[2]; yprev[2]=SCALE*state.pose.position.y;
       xvact=(xprev[2]-xprev[1])/DT;
       yvact=(yprev[2]-yprev[1])/DT;
-      float xacc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);
-      float yacc = -(2.0*yprev[1]-yprev[2]-yprev[0])/(DT*DT);
-      currstate.q = {(float)sys->Xcurr[0],(float)sys->Xcurr[2]};
-      arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
-      currstate.dq = {(float)xdot(0),(float)xdot(2)};
-      currstate.ddq = {(float)xdot(1),(float)xdot(3)};
-      sys->Ucurr = {xacc,yacc}; 
-      sys->step();
+      if(initcon<3){initcon+=1;
+        sys->Xcurr = {xprev[2],xvact,yprev[2],yvact}; sys->Ucurr={0.0,0.0}; 
+        ROS_INFO("Initcon set");
+        }
+      else{           
+        double xacc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);
+        double yacc = -(2.0*yprev[1]-yprev[2]-yprev[0])/(DT*DT);
+        currstate.q = {sys->Xcurr[0],sys->Xcurr[2]};
+        sys->Ucurr = {xacc,yacc}; 
+        arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
+        currstate.dq = {(float)xdot(0),(float)xdot(2)};
+        currstate.ddq = {(float)xdot(1),(float)xdot(3)};
+      //sys->Ucurr = {xacc,yacc}; 
+        currstate.u = {SCALE*q_acc.x(), SCALE*q_acc.y(),xacc,yacc};
       //sacsys->SAC_calc();
       //currstate.sac = {(float)sacsys->ulist(0)};
-      currstate.accept = demon->filter(sys->Ucurr);
-      mda_pub.publish(currstate);
+        currstate.accept = demon->filter(sys->Ucurr);
+        mda_pub.publish(currstate);
+        sys->step();
+        };
       
 };
   
@@ -187,7 +189,7 @@ int main(int argc, char **argv){
   image = (cv::Scalar::all(255)-imagetemp);cout<<cv::mean(image)[0]<<"\n";
   cv::flip(image,image,-1);  
   int rows = imagetemp.rows; 
-  DoubleInt syst1 (1./60.);
+  DoubleInt syst1 (DT);
   arma::mat R = 0.01*arma::eye(2,2); double q=1000.;
   arma::vec umax = {40,40};  
   double T = 1.0;
