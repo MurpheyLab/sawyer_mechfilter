@@ -185,5 +185,8 @@ int main(int argc, char **argv){
   ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>> sim(&n,&syst1,&cost,&sacsys1,&filt);
   ros::Timer timer = n.createTimer(ros::Duration(DT), &ImpedeSimulator<CartPend,errorcost<CartPend>,sac<CartPend,errorcost<CartPend>>>::timercall, &sim);
   ros::spin();
+  //try putting shutdown commands here?
+  //intera_core_msgs::InteractionControlCommand clearimpedance;
+  //n.interactCommand.publish()
  return 0;
 };

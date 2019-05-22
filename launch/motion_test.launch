@@ -1,0 +1,12 @@
+<launch>
+  <!-- ARGUMENT DEFINITIONS -->
+  <arg name="vis" default="false" /> <!-- run rviz? -->
+  
+    <!-- startup simulator node -->
+    <node pkg="sawyer_humcpp" type="motion_test" name="motion_test"
+	  respawn="true" output="screen" />
+    
+    
+  </launch>
+
+  

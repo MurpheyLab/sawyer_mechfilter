@@ -121,7 +121,6 @@ class DrawSimulator{
         arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
         currstate.dq = {(float)xdot(0),(float)xdot(2)};
         currstate.ddq = {(float)xdot(1),(float)xdot(3)};
-      //sys->Ucurr = {xacc,yacc}; 
         currstate.u = {SCALE*q_acc.x(), SCALE*q_acc.y(),xacc,yacc};
       //sacsys->SAC_calc();
       //currstate.sac = {(float)sacsys->ulist(0)};

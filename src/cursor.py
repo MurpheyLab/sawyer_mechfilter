@@ -50,7 +50,7 @@ class Visualizer_Cursor:
         self.subsamp = 0
         
     def update_marks(self,data):
-        ptransc = [data.ef[0],data.ef[1],data.ef[2]]#data.ef[1] is the cart coord
+        ptransc = [data.ef[0],data.ef[1],data.ef[2]]
         p = PointStamped()
         p.header.stamp = rospy.Time.now()
         p.header.frame_id = SIMFRAME
