@@ -31,7 +31,7 @@ SERVICES:
 #include <intera_motion_msgs/MotionCommandAction.h>
 #include <actionlib/client/simple_action_client.h>
 
-const double DT=0.01;
+const double DT=1;//0.01;
 
 typedef actionlib::SimpleActionClient<intera_motion_msgs::MotionCommandAction> Client;
 using namespace std;
@@ -53,12 +53,14 @@ class MotionSim{
   //sawyer_humcpp::mdasys currstate;
   tf2::Quaternion q_acc, q_ep,q_ep_force;
   bool initcon=false;
-    
-  string joint_names[7] = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
   
+  
+  string joint_names[7] = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
+  intera_motion_msgs::MotionCommandGoal motiongoal;
+  Client* ac = new Client("/motion/motion_command",true);
+  geometry_msgs::Pose pose_init;
   
   public:
-  
   //MotionSim(ros::NodeHandle* _nh,system *_sys, objective *_cost,sac *_sacsys,mda *_demon){
   MotionSim(ros::NodeHandle* _nh){
     nh=_nh;//sys = _sys; cost=_cost;sacsys=_sacsys;demon=_demon;
@@ -70,21 +72,49 @@ class MotionSim{
     end_acc = nh->subscribe("/robot/accelerometer/right_accelerometer/state",5,&MotionSim::calc_input,this);
       
     //setup ros action server client
-    Client ac("/motion/motion_command",true);
-    ROS_INFO("Waiting for action server to start.");
-    ac.waitForServer();
+    //ac("/motion/motion_command",true);
+    //ROS_INFO("Waiting for action server to start.");
+    ac->waitForServer();
+    ROS_INFO("Action server started.");
     };
   
   //set up timer callback fxn
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
     if(initcon==false) {return;};
-    
+    motiongoal.command = "start";
+    intera_motion_msgs::Trajectory traj;
+    traj.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
+    intera_motion_msgs::Waypoint wpt_next;
+    wpt_next.active_endpoint = "right_hand";
+    wpt_next.pose.header.stamp = ros::Time::now();
+    wpt_next.pose.header.seq=1;
+    wpt_next.pose.header.frame_id = "base";
+    wpt_next.pose.pose = pose_init;
+    wpt_next.pose.pose.position.y = pose_init.position.y - 0.1;
+    wpt_next.options.max_joint_speed_ratio = 0.8;
+    wpt_next.options.joint_tolerances = {0.05,0.05,0.05,0.05,0.05,0.05,0.05};
+    wpt_next.options.max_linear_speed = 0.6;
+    wpt_next.options.max_linear_accel = 0.6;
+    wpt_next.options.max_rotational_speed=1.57;
+    wpt_next.options.max_rotational_accel = 1.57;
+    wpt_next.options.corner_distance = 0;
+    traj.waypoints.push_back(wpt_next);
+    traj.trajectory_options.interpolation_type = "CARTESIAN";
+    traj.trajectory_options.interaction_control=false;
+    //traj.trajectory_options.interaction_params = interactopt;
+    traj.trajectory_options.nso_start_offset_allowed = true;//set to false for 'small' motions
+    //traj.trajectory_options.tracking_options = ;
+    traj.trajectory_options.end_time = t0 + ros::Duration(2);
+    //traj.trajectory_options.path_interpolation_step = DT;??
+    motiongoal.trajectory = traj;
+    ac->sendGoal(motiongoal);
    };
   
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
       if(initcon==false){
+        pose_init = state.pose;
         initcon=true;ROS_INFO("Initcon set");
       };      
            
