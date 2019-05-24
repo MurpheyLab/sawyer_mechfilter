@@ -31,7 +31,7 @@ SERVICES:
 #include <intera_motion_msgs/MotionCommandAction.h>
 #include <actionlib/client/simple_action_client.h>
 
-const double DT=1;//0.01;
+const double DT=1./2.;
 
 typedef actionlib::SimpleActionClient<intera_motion_msgs::MotionCommandAction> Client;
 using namespace std;
@@ -91,22 +91,23 @@ class MotionSim{
     wpt_next.pose.header.seq=1;
     wpt_next.pose.header.frame_id = "base";
     wpt_next.pose.pose = pose_init;
-    wpt_next.pose.pose.position.y = pose_init.position.y - 0.1;
-    wpt_next.options.max_joint_speed_ratio = 0.8;
-    wpt_next.options.joint_tolerances = {0.05,0.05,0.05,0.05,0.05,0.05,0.05};
-    wpt_next.options.max_linear_speed = 0.6;
-    wpt_next.options.max_linear_accel = 0.6;
+    wpt_next.pose.pose.position.x = pose_init.position.x - 0.1*sin(tcurr.toSec()/1.);
+    wpt_next.pose.pose.position.y = pose_init.position.y + 0.2*(cos(tcurr.toSec()/1.)-1);
+    wpt_next.options.max_joint_speed_ratio = 1.0;
+    wpt_next.options.joint_tolerances = {0.1,0.1,0.1,0.1,0.1,0.1,0.1};
+    wpt_next.options.max_linear_speed = 2.0;
+    wpt_next.options.max_linear_accel = 2.0;
     wpt_next.options.max_rotational_speed=1.57;
     wpt_next.options.max_rotational_accel = 1.57;
-    wpt_next.options.corner_distance = 0;
+    wpt_next.options.corner_distance = 0.5;
     traj.waypoints.push_back(wpt_next);
     traj.trajectory_options.interpolation_type = "CARTESIAN";
-    traj.trajectory_options.interaction_control=false;
-    //traj.trajectory_options.interaction_params = interactopt;
-    traj.trajectory_options.nso_start_offset_allowed = true;//set to false for 'small' motions
+    traj.trajectory_options.interaction_control=true; interact_options(true);
+    traj.trajectory_options.interaction_params = interactopt;
+    traj.trajectory_options.nso_start_offset_allowed = false;//set to false for 'small' motions
     //traj.trajectory_options.tracking_options = ;
-    traj.trajectory_options.end_time = t0 + ros::Duration(2);
-    //traj.trajectory_options.path_interpolation_step = DT;??
+    traj.trajectory_options.end_time = t0 + tcurr+ ros::Duration(DT);
+    traj.trajectory_options.path_interpolation_step = 1./500.;
     motiongoal.trajectory = traj;
     ac->sendGoal(motiongoal);
    };
@@ -135,7 +136,7 @@ class MotionSim{
     interactopt.interaction_control_active = true;
     interactopt.interaction_control_mode = {1,3,1,1,1,1};
     interactopt.K_impedance = {0,0,1300,1000,1000,1000};
-    interactopt.max_impedance = {true,false,true,true,true,true};
+    interactopt.max_impedance = {false,false,true,true,true,true};
     interactopt.D_impedance = {0,0,8.,0,2,2};
     interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
     interactopt.force_command = {300.,300.,0.,0.,0.,0.};
