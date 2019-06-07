@@ -143,14 +143,14 @@ class DrawSimulator{
     interactopt.header.seq=1;
     interactopt.header.frame_id = "base";
     interactopt.interaction_control_active = true;
-    interactopt.interaction_control_mode = {1,1,1,1,1,1};
-    interactopt.K_impedance = {0,0,1300,1000,1000,1000};
-    interactopt.max_impedance = {false,false,true,true,true,true};
-    interactopt.D_impedance = {0,0,8.,0,2,2};
-    interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
-    interactopt.force_command = {0.,0.,0.,0.,0.,0.};
+    interactopt.interaction_control_mode = {3,3,1,1,1,1};
+    interactopt.K_impedance = {0,0,500,5000,1000,1000};
+    interactopt.max_impedance = {false,false,false,false,false,false};
+    interactopt.D_impedance = {0,-5,8.,0,2,2};
+    interactopt.K_nullspace = {0.,10.,10.,0.,100.,0.,0.};
+    interactopt.force_command = {300.,300.,0.,0.,0.,0.};
     if(reject==true){
-        interactopt.D_impedance = {50*(yvact-yvd),50*(xvact-xvd),8.,0,2,2};
+        interactopt.D_impedance = {(-1^signbit(yvact))*50*(yvact-yvd),(-1^signbit(xvact))*50*(xvact-xvd),8.,0,2,2};
     }
     interactopt.interaction_frame.position.x = 0;
     interactopt.interaction_frame.position.y =0;
