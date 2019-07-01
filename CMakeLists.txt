@@ -60,3 +60,7 @@ add_executable(motion_test src/motion_impedance.cpp)
 add_dependencies(motion_test ${catkin_EXPORTED_TARGETS})
 target_link_libraries(motion_test ${catkin_LIBRARIES} armadillo)
 
+add_executable(gohome src/gohome.cpp)
+add_dependencies(gohome ${catkin_EXPORTED_TARGETS})
+target_link_libraries(gohome ${catkin_LIBRARIES})
+
