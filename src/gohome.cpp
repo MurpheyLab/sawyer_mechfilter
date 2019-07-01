@@ -137,15 +137,16 @@ class Homing{
     wpt.options.max_rotational_speed=1.57;
     wpt.options.max_rotational_accel = 1.57;
     wpt.options.corner_distance = 0.5;
-    wpt.pose.pose.position.x = 0.6; wpt.pose.pose.position.y = 0.1; wpt.pose.pose.position.z = 0.2;
+    /*wpt.pose.pose.position.x = 0.6; wpt.pose.pose.position.y = 0.1; wpt.pose.pose.position.z = 0.2;
     wpt.pose.pose.orientation.x = 0.707; wpt.pose.pose.orientation.y = 0.707;
-    wpt.pose.pose.orientation.z = 0.; wpt.pose.pose.orientation.w = 0.;
-    wpt.joint_positions = {-0.1,-0.9,0.,1.8,0.,0.7,3.2};
+    wpt.pose.pose.orientation.z = 0.; wpt.pose.pose.orientation.w = 0.;*/
+    //wpt.joint_positions = {-0.1,-0.9,0.,1.8,0.,0.7,3.2};
+    wpt.joint_positions = {-0.106, -0.922, 0.005, 1.771, -0.005, 0.716, 3.218};
     traj.waypoints.push_back(wpt);
-    traj.trajectory_options.interpolation_type = "CARTESIAN";
+    traj.trajectory_options.interpolation_type = "JOINT";
     traj.trajectory_options.interaction_control=false;
     traj.trajectory_options.nso_start_offset_allowed = true;//set to false for 'small' motions
-    traj.trajectory_options.end_time = t0 + ros::Duration(5.0);
+    traj.trajectory_options.end_time = t0 + ros::Duration(10.0);
     traj.trajectory_options.path_interpolation_step = 1./100.;
     motiongoal.trajectory = traj;
     ac->sendGoal(motiongoal);
