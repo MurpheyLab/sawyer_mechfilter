@@ -47,7 +47,7 @@ class Homing{
     
   string joint_names[7] = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
   intera_motion_msgs::MotionCommandGoal motiongoal;
-  intera_motion_msgs::MotionCommandGoal motionstop; 
+  //intera_motion_msgs::MotionCommandGoal motionstop; 
   Client* ac = new Client("/motion/motion_command",true);
   geometry_msgs::Pose pose_init;
   geometry_msgs::Pose pose_now;
@@ -89,39 +89,13 @@ class Homing{
   void check_traj(const intera_motion_msgs::MotionCommandActionResult& res){
     if(!res.result.result){
         ROS_INFO("Tracjectory Failed");
-        ROS_INFO("%s\n",res.result.errorId.c_str());
-    };  
+        ROS_INFO("%s",res.result.errorId.c_str());
+    }
+    else{ROS_INFO("Trajectory Successful");};
     
   };
   
-  //setting the impedance of the interaction options message
-  /*void interact_options(bool reject){
-    interactopt.header.stamp = ros::Time::now();
-    interactopt.header.seq=1;
-    interactopt.header.frame_id = "base";
-    interactopt.interaction_control_active = true;
-    interactopt.interaction_control_mode = {1,3,1,1,1,1};
-    interactopt.K_impedance = {20,20,1300,1000,1000,1000};
-    interactopt.max_impedance = {true,false,true,true,true,true};
-    interactopt.D_impedance = {0,0,8.,0,2,2};
-    interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
-    interactopt.force_command = {300.,300.,0.,0.,0.,0.};
-    interactopt.interaction_frame.position.x = 0;
-    interactopt.interaction_frame.position.y =0;
-    interactopt.interaction_frame.position.z  =0;
-    interactopt.interaction_frame.orientation.x = 0;
-    interactopt.interaction_frame.orientation.y = 0;
-    interactopt.interaction_frame.orientation.z = 0;
-    interactopt.interaction_frame.orientation.w = 1;
-    interactopt.endpoint_name ="right_hand";
-    interactopt.in_endpoint_frame = false;
-    interactopt.disable_damping_in_force_control = true;
-    interactopt.disable_reference_resetting = false;
-    interactopt.rotations_for_constrained_zeroG = false;
-  };*/
-  
   void set_neutral(){
-    ROS_INFO("Moving to Start Position");
     motiongoal.command = "start";
     intera_motion_msgs::Trajectory traj;
     traj.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
@@ -137,22 +111,16 @@ class Homing{
     wpt.options.max_rotational_speed=1.57;
     wpt.options.max_rotational_accel = 1.57;
     wpt.options.corner_distance = 0.5;
-    /*wpt.pose.pose.position.x = 0.6; wpt.pose.pose.position.y = 0.1; wpt.pose.pose.position.z = 0.2;
-    wpt.pose.pose.orientation.x = 0.707; wpt.pose.pose.orientation.y = 0.707;
-    wpt.pose.pose.orientation.z = 0.; wpt.pose.pose.orientation.w = 0.;*/
-    //wpt.joint_positions = {-0.1,-0.9,0.,1.8,0.,0.7,3.2};
     wpt.joint_positions = {-0.106, -0.922, 0.005, 1.771, -0.005, 0.716, 3.218};
     traj.waypoints.push_back(wpt);
     traj.trajectory_options.interpolation_type = "JOINT";
     traj.trajectory_options.interaction_control=false;
     traj.trajectory_options.nso_start_offset_allowed = true;//set to false for 'small' motions
-    traj.trajectory_options.end_time = t0 + ros::Duration(10.0);
+    traj.trajectory_options.end_time = t0 + ros::Duration(5.0);
     traj.trajectory_options.path_interpolation_step = 1./100.;
     motiongoal.trajectory = traj;
     ac->sendGoal(motiongoal);
-    while(ros::Time::now().toSec()<traj.trajectory_options.end_time.toSec()){};
-    ROS_INFO("In Start Position");
-     
+    ROS_INFO("Moving to Start Position");
   };
         
 };

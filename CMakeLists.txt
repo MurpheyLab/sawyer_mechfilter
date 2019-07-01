@@ -64,3 +64,7 @@ add_executable(gohome src/gohome.cpp)
 add_dependencies(gohome ${catkin_EXPORTED_TARGETS})
 target_link_libraries(gohome ${catkin_LIBRARIES})
 
+add_executable(circle src/circle_impedance.cpp)
+add_dependencies(circle ${catkin_EXPORTED_TARGETS})
+target_link_libraries(circle ${catkin_LIBRARIES})
+
