@@ -47,17 +47,14 @@ class CircleMove{
   ros::NodeHandle* nh;
   ros::Subscriber cursor_state;
   ros::Subscriber traj_result;
+  intera_core_msgs::InteractionControlCommand interactopt;
   sawyer_humcpp::mdasys currstate;
   tf2::Quaternion q_acc, q_ep,q_ep_force;
-  //bool initcon=false;
-    
+      
   string joint_names[7] = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
   intera_motion_msgs::MotionCommandGoal motiongoal;
-  //intera_motion_msgs::MotionCommandGoal motionstop; 
   Client* ac = new Client("/motion/motion_command",true);
-  geometry_msgs::Pose pose_init;
-  geometry_msgs::Pose pose_now;
-  
+    
   public:
   CircleMove(ros::NodeHandle* _nh){
     nh=_nh;
@@ -97,16 +94,16 @@ class CircleMove{
   };
   
   //setting the impedance of the interaction options message
-  /*void interact_options(bool reject){
+  void interact_options(bool reject){
     interactopt.header.stamp = ros::Time::now();
     interactopt.header.seq=1;
     interactopt.header.frame_id = "base";
     interactopt.interaction_control_active = true;
-    interactopt.interaction_control_mode = {1,3,1,1,1,1};
-    interactopt.K_impedance = {20,20,1300,1000,1000,1000};
-    interactopt.max_impedance = {true,false,true,true,true,true};
+    interactopt.interaction_control_mode = {3,3,1,1,1,1};
+    interactopt.K_impedance = {0,0,500,5000,1000,1000};
+    interactopt.max_impedance = {false,false,false,false,false,false};
     interactopt.D_impedance = {0,0,8.,0,2,2};
-    interactopt.K_nullspace = {0.,10.,10.,0.,0.,0.,0.};
+    interactopt.K_nullspace = {0.,10.,10.,0.,100.,0.,0.};
     interactopt.force_command = {300.,300.,0.,0.,0.,0.};
     interactopt.interaction_frame.position.x = 0;
     interactopt.interaction_frame.position.y =0;
@@ -120,7 +117,7 @@ class CircleMove{
     interactopt.disable_damping_in_force_control = true;
     interactopt.disable_reference_resetting = false;
     interactopt.rotations_for_constrained_zeroG = false;
-  };*/
+  };
   
   void set_traj(){
     motiongoal.command = "start";
@@ -148,7 +145,8 @@ class CircleMove{
       traj.waypoints.push_back(wpt_next);
     }
     traj.trajectory_options.interpolation_type = "CARTESIAN";
-    traj.trajectory_options.interaction_control=false;
+    traj.trajectory_options.interaction_control=true;
+    traj.trajectory_options.interaction_params=interactopt;
     traj.trajectory_options.nso_start_offset_allowed = true;//set to false for 'small' motions
     traj.trajectory_options.end_time = t0 + ros::Duration(DURATION);
     motiongoal.trajectory = traj;

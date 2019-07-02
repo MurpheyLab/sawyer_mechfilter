@@ -68,3 +68,7 @@ add_executable(circle src/circle_impedance.cpp)
 add_dependencies(circle ${catkin_EXPORTED_TARGETS})
 target_link_libraries(circle ${catkin_LIBRARIES})
 
+add_executable(walls src/virtual_fixture.cpp)
+add_dependencies(walls ${catkin_EXPORTED_TARGETS})
+target_link_libraries(walls ${catkin_LIBRARIES})
+
