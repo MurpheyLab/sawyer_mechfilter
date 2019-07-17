@@ -72,3 +72,7 @@ add_executable(walls src/virtual_fixture.cpp)
 add_dependencies(walls ${catkin_EXPORTED_TARGETS})
 target_link_libraries(walls ${catkin_LIBRARIES})
 
+add_executable(applewalls src/apple_walls.cpp)
+add_dependencies(applewalls ${catkin_EXPORTED_TARGETS})
+target_link_libraries(applewalls ${catkin_LIBRARIES})
+
