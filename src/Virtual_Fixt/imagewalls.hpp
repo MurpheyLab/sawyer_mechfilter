@@ -42,8 +42,8 @@ arma::vec imagewalls::wallforce(int x, int y){
   double Fmag = Kp*(boundary - nearest.dist);
   
   arma::vec Fwall = arma::zeros<arma::vec>(2);
-  Fwall(0) = Fmag*(nearest.x-x)/nearest.dist;
-  Fwall(1) = Fmag*(nearest.y-y)/nearest.dist;
+  Fwall(0) = Fmag*(x-nearest.x)/nearest.dist;
+  Fwall(1) = Fmag*(y-nearest.y)/nearest.dist;
   return Fwall;};
 
 //imagewalls::

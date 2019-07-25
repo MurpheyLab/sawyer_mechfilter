@@ -91,7 +91,7 @@ class Walls{
     interactopt.D_impedance = {0,0,8.,0,2,2};
     interactopt.K_nullspace = {0.,10.,10.,0.,100.,0.,0.};
     if(reject==true){
-      interactopt.force_command = {0.,Kp*(0.2-currstate.ef[1])+Kd*currstate.dq[0],0.,0.,0.,0.};
+      interactopt.force_command = {0.,Kp*(0.2-currstate.ef[1])-Kd*currstate.dq[1],0.,0.,0.,0.};
       //ROS_INFO("Boundary Violation");
     }else{interactopt.force_command = {0.,0.,0.,0.,0.,0.};};
     interactopt.interaction_frame.position.x = 0;
