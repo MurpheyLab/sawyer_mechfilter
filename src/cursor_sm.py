@@ -30,7 +30,7 @@ class Visualizer_Cursor:
         self.mass_marker.color = ColorRGBA(*[1.0, 1.0, 1.0, 1.0])
         self.mass_marker.header.frame_id = rospy.get_namespace() + SIMFRAME 
         self.mass_marker.lifetime = rospy.Duration(5*DT)
-        self.mass_marker.scale = GM.Vector3(*[0.13, 0.13, 0.13])
+        self.mass_marker.scale = GM.Vector3(*[0.05, 0.05, 0.05])
         self.mass_marker.type = VM.Marker.SPHERE
         self.mass_marker.id = 0
         
@@ -39,7 +39,7 @@ class Visualizer_Cursor:
         self.draw_marker.color = ColorRGBA(*[1.0, 1.0, 1.0, 1.0])
         self.draw_marker.header.frame_id = rospy.get_namespace() + SIMFRAME 
         self.draw_marker.lifetime = rospy.Duration(100*DT)
-        self.draw_marker.scale = GM.Vector3(*[0.05, 0.05, 0.05])
+        self.draw_marker.scale = GM.Vector3(*[0.01, 0.01, 0.01])
         self.draw_marker.type = VM.Marker.POINTS
         self.draw_marker.id = 1
         
@@ -71,7 +71,7 @@ def main():
     Run the main loop, by instatiating a System class, and then
     calling ros.spin
     """
-    rospy.init_node('cursor', log_level=rospy.INFO)
+    rospy.init_node('cursor_sm', log_level=rospy.INFO)
 
     try:
         sim = Visualizer_Cursor()

@@ -34,8 +34,8 @@ SERVICES:
 
 const double SCALE = 1.0;
 const double DT=1./100.;
-const double Kp = 0.1;
-const double Kd = 1.;
+const double Kp = 1.0;
+const double Kd = 50.;
 
 using namespace std;
 
@@ -130,7 +130,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "walls");
   ros::NodeHandle n;
   string imageName("/home/kt-fitz/sawyer_ws/src/sawyer_humcpp/src/apple.png");
-  imagewalls apple(imageName, 400.,Kp);
+  imagewalls apple(imageName, 300.,Kp);
   Walls sim(&n, &apple);
   ros::Timer timer = n.createTimer(ros::Duration(DT), &Walls::timercall, &sim);
   ros::spin();
