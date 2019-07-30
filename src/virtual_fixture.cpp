@@ -1,22 +1,18 @@
 /*
 Kathleen Fitzsimons
 
-This node runs a timer that uses the current state of the cursor to drive the trep simulation. 
-The position of the pendulum is also published.
+
+This node runs a timer that uses the current state of Sawyer's end effector
+to calculate a feedback force based on the end effector's distance from a
+virtual wall.
+It subscribes to the endpoint_state of the robot limb and publishes an 
+interaction control command. 
 
 SUBSCRIBERS:
-    - cursor_state (nact3d/cursor)
+    - cursor_state (/robot/limb/right/endpoint_state)
 
 PUBLISHERS:
-    - mass_point (PointStamped)
-    - visualization_marker_array (MarkerArray)
-    - cursor_bias (Float32MultiArray)
-    - cursor_dyn (nact3d/cursor_dyn)
-    - trep_sys (mda_act3d/mdasys)
-    - act3d_read (Bool)
-    - acceptance (Bool)
-
-SERVICES:
+    -interact_command (/robot/limb/right/interaction_control_command)
 */
 #include<typeinfo>
 #include <ros/ros.h>

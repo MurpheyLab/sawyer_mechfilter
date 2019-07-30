@@ -1,3 +1,20 @@
+"""
+Kathleen Fitzsimons
+
+This node sets up a marker array for visualizing the current position of 
+the end effector as well as a points array for visualizing the trajectory
+history of the end effector. The Marker array is published to Rviz. Markers
+are updated using a callback function that takes the custom data collection
+message as its argument.
+
+SUBSCRIBERS:
+    - mda_sub (mda_topic)
+    
+PUBLISHERS:
+    - marker_pub (visualization_marker_array)
+ 
+SERVICES:N/A
+"""
 #!/usr/bin/env python
 import numpy as np
 import copy

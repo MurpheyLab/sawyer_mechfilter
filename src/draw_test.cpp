@@ -1,22 +1,21 @@
 /*
 Kathleen Fitzsimons
 
-This node runs a timer that uses the current state of the cursor to drive the trep simulation. 
-The position of the pendulum is also published.
+This node runs a timer that uses the most recent update to the state of Sawyer's 
+end effector to accept or reject user inputs. It subscribes to the endpoint_state
+and accelerometer of the robot limb and publishes an interaction control command.
+A custom message for synchronized data collection is also published, and is used by another
+node for visualization of the system in Rviz. 
 
 SUBSCRIBERS:
-    - cursor_state (nact3d/cursor)
+    - cursor_state (/robot/limb/right/endpoint_state)
+    - end_acc (/robot/accelerometer/right_accelerometer/state)
 
 PUBLISHERS:
-    - mass_point (PointStamped)
-    - visualization_marker_array (MarkerArray)
-    - cursor_bias (Float32MultiArray)
-    - cursor_dyn (nact3d/cursor_dyn)
-    - trep_sys (mda_act3d/mdasys)
-    - act3d_read (Bool)
-    - acceptance (Bool)
+    -mda_pub (mda_topic)
+    -interact_command (/robot/limb/right/interaction_control_command)
 
-SERVICES:
+SERVICES:N/A
 */
 #include<typeinfo>
 #include <ros/ros.h>

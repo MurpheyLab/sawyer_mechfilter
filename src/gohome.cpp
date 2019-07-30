@@ -1,22 +1,20 @@
 /*
 Kathleen Fitzsimons
 
-This node runs a timer that uses the current state of the cursor to drive the trep simulation. 
-The position of the pendulum is also published.
+This node runs a timer that checks if the current endpoint positon of the Sawyer
+is in the home position. It also sends a single command to Sawyer's Motion Control
+action server to move the robot to the home state using a joint angle command.
 
 SUBSCRIBERS:
-    - cursor_state (nact3d/cursor)
+    - cursor_state (/robot/limb/right/endpoint_state)
+    - traj_result (/motion/motion_command/result)
 
-PUBLISHERS:
-    - mass_point (PointStamped)
-    - visualization_marker_array (MarkerArray)
-    - cursor_bias (Float32MultiArray)
-    - cursor_dyn (nact3d/cursor_dyn)
-    - trep_sys (mda_act3d/mdasys)
-    - act3d_read (Bool)
-    - acceptance (Bool)
-
+PUBLISHERS:N/A
+ 
 SERVICES:
+    - Sawyer's MotionControl Action Server is used by setting up
+      and action client called (ac) publishing commands to the topic
+      /motion/motion_command
 */
 #include<typeinfo>
 #include <ros/ros.h>

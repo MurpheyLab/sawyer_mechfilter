@@ -1,22 +1,21 @@
 /*
 Kathleen Fitzsimons
 
-This node runs a timer that uses the current state of the cursor to drive the trep simulation. 
-The position of the pendulum is also published.
+This node runs a timer that uses the current state of Sawyer's end effector
+to calculate a feedback force based on the end effector's distance from the
+nearest black pixel in the prescribed image.
+It subscribes to the endpoint_state of the robot limb and publishes an 
+interaction control command. A custom message for synchronized data collection
+is also published.
 
 SUBSCRIBERS:
-    - cursor_state (nact3d/cursor)
+    - cursor_state (/robot/limb/right/endpoint_state)
 
 PUBLISHERS:
-    - mass_point (PointStamped)
-    - visualization_marker_array (MarkerArray)
-    - cursor_bias (Float32MultiArray)
-    - cursor_dyn (nact3d/cursor_dyn)
-    - trep_sys (mda_act3d/mdasys)
-    - act3d_read (Bool)
-    - acceptance (Bool)
+    -mda_pub (mda_topic)
+    -interact_command (/robot/limb/right/interaction_control_command)
 
-SERVICES:
+SERVICES:N/A
 */
 #include<typeinfo>
 #include <ros/ros.h>
@@ -130,7 +129,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "walls");
   ros::NodeHandle n;
   string imageName("/home/kt-fitz/sawyer_ws/src/sawyer_humcpp/src/apple.png");
-  imagewalls apple(imageName, 300.,Kp);
+  imagewalls apple(imageName, 100.,Kp);
   Walls sim(&n, &apple);
   ros::Timer timer = n.createTimer(ros::Duration(DT), &Walls::timercall, &sim);
   ros::spin();
