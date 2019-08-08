@@ -45,7 +45,7 @@ using namespace std;
 
 const double DT=0.01;
 const double SCALE = 1.0;
-const double Kv = 150.0;
+const double Kv = 75.0;
 
 template <class system, class objective,class sac,class mda>
 class DrawSimulator{
@@ -98,35 +98,39 @@ class DrawSimulator{
   
   //state update from end effector
   void update_state(const intera_core_msgs::EndpointState& state){
-      currstate.sys_time = sys->tcurr;//(ros::Time::now() - t0).toSec();
-      q_ep.setValue(state.pose.orientation.x,state.pose.orientation.y,state.pose.orientation.z,state.pose.orientation.w);
-      tf2::Quaternion q_force_temp; q_force_temp.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
-      q_ep_force = q_ep*q_force_temp*q_ep.inverse();
-      //currstate.u = {SCALE*q_acc.x(), SCALE*q_acc.y()};
-      currstate.ef = {SCALE*state.pose.position.x,SCALE*state.pose.position.y,SCALE*state.pose.position.z};
-      xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*state.pose.position.x;
-      yprev[0] = yprev[1]; yprev[1]=yprev[2]; yprev[2]=SCALE*state.pose.position.y;
-      xvact=(xprev[2]-xprev[1])/DT;
-      yvact=(yprev[2]-yprev[1])/DT;
-      if(initcon<3){initcon+=1;
-        sys->Xcurr = {xprev[2],xvact,yprev[2],yvact}; sys->Ucurr={0.0,0.0}; 
-        ROS_INFO("Initcon set");
-        }
-      else{           
-        double xacc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);
-        double yacc = -(2.0*yprev[1]-yprev[2]-yprev[0])/(DT*DT);
-        currstate.q = {sys->Xcurr[0],sys->Xcurr[2]};
-        sys->Ucurr = {xacc,yacc}; 
-        arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
-        currstate.dq = {(float)xdot(0),(float)xdot(2)};
-        currstate.ddq = {(float)xdot(1),(float)xdot(3)};
-        currstate.u = {SCALE*q_acc.x(), SCALE*q_acc.y(),xacc,yacc};
+    currstate.sys_time = sys->tcurr;//(ros::Time::now() - t0).toSec();
+    double xcurr,ycurr;
+    xcurr = SCALE*state.pose.position.x-0.6; ycurr = SCALE*state.pose.position.y-0.1;//center at home position
+    xcurr = (xcurr+0.3)/0.6;//pushing x between 0 and 1
+    ycurr = (ycurr+0.3)/0.6;
+    q_ep.setValue(state.pose.orientation.x,state.pose.orientation.y,state.pose.orientation.z,state.pose.orientation.w);
+    tf2::Quaternion q_force_temp; q_force_temp.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
+    q_ep_force = q_ep*q_force_temp*q_ep.inverse();
+    currstate.ef = {state.pose.position.x,state.pose.position.y,state.pose.position.z};
+    xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*state.pose.position.x;
+    yprev[0] = yprev[1]; yprev[1]=yprev[2]; yprev[2]=SCALE*state.pose.position.y;
+    xvact=(xprev[2]-xprev[1])/DT;
+    yvact=(yprev[2]-yprev[1])/DT;
+    if(initcon<3){initcon+=1;
+      sys->Xcurr = {xprev[2],xvact,yprev[2],yvact}; sys->Ucurr={0.0,0.0}; 
+      ROS_INFO("Initcon set");
+      }
+    else{           
+      double xacc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);
+      double yacc = -(2.0*yprev[1]-yprev[2]-yprev[0])/(DT*DT);
+      currstate.q = {sys->Xcurr[0],sys->Xcurr[2]};
+      sys->Ucurr = {SCALE*q_acc.x(),SCALE*q_acc.y()};//{xacc,yacc}; 
+      arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
+      currstate.dq = {(float)xdot(0),(float)xdot(2)};
+      currstate.ddq = {(float)xdot(1),(float)xdot(3)};
+      currstate.u = {SCALE*q_acc.x(), SCALE*q_acc.y(),xacc,yacc};
       //sacsys->SAC_calc();
       //currstate.sac = {(float)sacsys->ulist(0)};
-        currstate.accept = demon->filter(sys->Ucurr);
-        mda_pub.publish(currstate);
-        sys->step();
-        };
+      //currstate.accept = demon->filter(sys->Ucurr);
+      currstate.accept = demon->filter({q_acc.x(),q_acc.y()});
+      mda_pub.publish(currstate);
+      sys->step();
+    };
       
 };
   
@@ -149,7 +153,7 @@ class DrawSimulator{
     interactopt.K_nullspace = {0.,10.,10.,0.,100.,0.,0.};
     interactopt.force_command = {300.,300.,0.,0.,0.,0.};
     if(reject==true){
-        interactopt.D_impedance = {(-1^signbit(yvact))*50*(yvact-yvd),(-1^signbit(xvact))*50*(xvact-xvd),8.,0,2,2};
+        interactopt.D_impedance = {(-1^signbit(yvact))*Kv*(yvact-yvd),(-1^signbit(xvact))*Kv*(xvact-xvd),8.,0,2,2};
     }
     interactopt.interaction_frame.position.x = 0;
     interactopt.interaction_frame.position.y =0;
@@ -185,7 +189,7 @@ int main(int argc, char **argv){
   string imageName("/home/kt-fitz/sawyer_ws/src/sawyer_humcpp/src/apple.png");//need full directory or make sure image is on system PATH
   cv::Mat imagetemp = cv::imread(imageName.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
   image = (cv::Scalar::all(255)-imagetemp);cout<<cv::mean(image)[0]<<"\n";
-  cv::flip(image,image,-1);  
+  //cv::flip(image,image,-1);  
   int rows = imagetemp.rows; 
   DoubleInt syst1 (DT);
   arma::mat R = 0.01*arma::eye(2,2); double q=1000.;

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Kathleen Fitzsimons
 
@@ -12,9 +13,9 @@ SUBSCRIBERS:
 PUBLISHERS:
     - marker_pub (visualization_marker_array)
  
-SERVICES:N/A
+SERVICES:
 """
-#!/usr/bin/env python
+
 import numpy as np
 import copy
 import rospy

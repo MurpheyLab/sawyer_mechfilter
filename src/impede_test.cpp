@@ -44,7 +44,7 @@ using namespace std;
 
 const double DT=1./100.;
 const double SCALE = 4.0;
-const double Kv = 150.0;
+const double Kv = 50.0;
 
 template <class system, class objective,class sac>
 class ImpedeSimulator{
@@ -113,11 +113,11 @@ class ImpedeSimulator{
       arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
       currstate.dq = {(float)xdot(0),(float)xdot(2)};
       currstate.ddq = {(float)xdot(1),(float)xdot(3)};
-      sys->Ucurr = {-(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT)}; 
+      sys->Ucurr = {-(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT)};
       sys->step();
       sacsys->SAC_calc();
       currstate.sac = {(float)sacsys->ulist(0)};
-      arma::vec tempu = {SCALE*q_acc.y()};
+      arma::vec tempu = {q_ep_force.y()};//{SCALE*q_acc.y()};
       currstate.accept = demon->filter(sacsys->ulist.col(0),tempu);//sys->Ucurr);
       mda_pub.publish(currstate);
       
@@ -144,7 +144,7 @@ class ImpedeSimulator{
     interactopt.force_command = {300.,300.,0.,0.,0.,0.};
     
     if(reject==true){
-        interactopt.D_impedance = {0,(-1^signbit(vact))*50*(vact-vd),8.,0,2,2};
+        interactopt.D_impedance = {0,(-1^signbit(vact))*Kv*(vact-vd),8.,0,2,2};
         
     }
     interactopt.interaction_frame.position.x = 0;

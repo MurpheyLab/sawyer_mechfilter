@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Kathleen Fitzsimons
 
@@ -13,9 +14,9 @@ SUBSCRIBERS:
 PUBLISHERS:
     - marker_pub (visualization_marker_array)
  
-SERVICES:N/A
+SERVICES:
 """
-#!/usr/bin/env python
+
 import numpy as np
 import copy
 import rospy
@@ -30,7 +31,7 @@ from sawyer_humcpp.msg import mdasys
 SIMFRAME = "trep_world"
 MASSFRAME = "cursor"
 
-DT = 1./60.
+DT = 1./100.
 
 class Visualizer_Cursor:
     def __init__(self):
@@ -60,8 +61,25 @@ class Visualizer_Cursor:
         self.draw_marker.type = VM.Marker.POINTS
         self.draw_marker.id = 1
         
+        self.bound_marker = VM.Marker()
+        self.bound_marker.action
+        self.bound_marker.action = VM.Marker.ADD
+        self.bound_marker.color = ColorRGBA(*[1.0, 0.1, 0.1, 1.0])
+        self.bound_marker.header.frame_id = rospy.get_namespace() + SIMFRAME 
+        self.bound_marker.lifetime = rospy.Duration(100*DT)
+        self.bound_marker.scale = GM.Vector3(*[0.01, 0.01, 0.01])
+        self.bound_marker.type = VM.Marker.LINE_STRIP
+        pz = 0.2
+        p1 = [0.3,0.4,0.2]
+        p2 = [0.9,0.4,0.2]
+        p3 = [0.9,-0.2,0.2]
+        p4 = [0.3,-0.2,0.2]
+        self.bound_marker.points = [GM.Point(*p1),GM.Point(*p2),GM.Point(*p3),GM.Point(*p4),GM.Point(*p1)]
+        self.bound_marker.id = 2
+        
         self.markers.markers.append(self.mass_marker)
         self.markers.markers.append(self.draw_marker)
+        self.markers.markers.append(self.bound_marker)
         
         #set up subsampling of points
         self.subsamp = 0
@@ -76,7 +94,7 @@ class Visualizer_Cursor:
         if self.subsamp == 0:    
             self.draw_marker.points.append(GM.Point(*ptransc))
             self.subsamp +=1
-        elif self.subsamp == 25:
+        elif self.subsamp == 10:
             self.subsamp = 0
         else:
             self.subsamp+=1
