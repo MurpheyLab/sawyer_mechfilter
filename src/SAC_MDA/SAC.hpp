@@ -27,7 +27,6 @@ struct xupair{
 template <class system, class objective>
 class sac {
   system* sys; //from sys use sys->f, sys->proj_func, sys->dfdx, sys->hx,sys->dt
-  objective* cost; //from cost use cost->dldx, cost->calc_cost
   std::function<arma::vec(double)> unom;
   //algorithm parameters
   double gamma = -15; double delt_init = 0.5; double beta = 0.55;
@@ -51,6 +50,7 @@ class sac {
   return usol;}
     
   public:
+  objective* cost; //from cost use cost->dldx, cost->calc_cost
   bool iterative=false;
   int T_index;
   arma::mat ulist;//list for tracking the nominal control over the current time interval of lenght T

@@ -107,8 +107,8 @@ class DrawSimulator{
     tf2::Quaternion q_force_temp; q_force_temp.setValue(state.wrench.force.x,state.wrench.force.y,state.wrench.force.z,0.0);
     q_ep_force = q_ep*q_force_temp*q_ep.inverse();
     currstate.ef = {state.pose.position.x,state.pose.position.y,state.pose.position.z};
-    xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=SCALE*state.pose.position.x;
-    yprev[0] = yprev[1]; yprev[1]=yprev[2]; yprev[2]=SCALE*state.pose.position.y;
+    xprev[0] = xprev[1]; xprev[1]=xprev[2]; xprev[2]=xcurr;//SCALE*state.pose.position.x;
+    yprev[0] = yprev[1]; yprev[1]=yprev[2]; yprev[2]=ycurr;//SCALE*state.pose.position.y;
     xvact=(xprev[2]-xprev[1])/DT;
     yvact=(yprev[2]-yprev[1])/DT;
     if(initcon<3){initcon+=1;
@@ -119,7 +119,7 @@ class DrawSimulator{
       double xacc = -(2.0*xprev[1]-xprev[2]-xprev[0])/(DT*DT);
       double yacc = -(2.0*yprev[1]-yprev[2]-yprev[0])/(DT*DT);
       currstate.q = {sys->Xcurr[0],sys->Xcurr[2]};
-      sys->Ucurr = {SCALE*q_acc.x(),SCALE*q_acc.y()};//{xacc,yacc}; 
+      sys->Ucurr = {xacc,yacc}; //{SCALE*q_acc.x(),SCALE*q_acc.y()};
       arma::mat xdot = sys->f(sys->Xcurr,sys->Ucurr);
       currstate.dq = {(float)xdot(0),(float)xdot(2)};
       currstate.ddq = {(float)xdot(1),(float)xdot(3)};
@@ -129,7 +129,7 @@ class DrawSimulator{
       //currstate.accept = demon->filter(sys->Ucurr);
       currstate.accept = demon->filter({q_acc.x(),q_acc.y()});
       mda_pub.publish(currstate);
-      sys->step();
+      cost->ckmemory(sys->Xcurr); sys->step(); 
     };
       
 };

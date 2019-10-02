@@ -19,6 +19,7 @@ class migmda{
         arma::mat utemp = arma::zeros(user.n_rows, sacsys->T_index); utemp.col(0) = user;
         arma::mat unom = arma::zeros(user.n_rows,sacsys->T_index);
         arma::mat xsol = sacsys->xforward(utemp);
+        double J1 = sacsys->cost->calc_cost(xsol,utemp);//must execute before rhoback for ergodic cost fxns
         arma::mat rhosol = sacsys->rhoback(xsol,utemp);
         for(int i = 0;i<utemp.n_cols;i++) dJdlam_int+=sacsys->dJdlam_t(xsol.col(i),rhosol.col(i),utemp.col(i),unom.col(i));
         //if(sacsys->dJdlam_t(xsol.col(0),rhosol.col(0),utemp.col(0),unom.col(0))>=0.){

@@ -76,3 +76,7 @@ add_executable(applewalls src/apple_walls.cpp)
 add_dependencies(applewalls ${catkin_EXPORTED_TARGETS})
 target_link_libraries(applewalls ${catkin_LIBRARIES})
 
+add_executable(appledkl src/apple_dkl.cpp)
+add_dependencies(appledkl ${catkin_EXPORTED_TARGETS})
+target_link_libraries(appledkl ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
+
