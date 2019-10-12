@@ -76,10 +76,29 @@ class Visualizer_Cursor:
         p4 = [0.3,-0.2,0.2]
         self.bound_marker.points = [GM.Point(*p1),GM.Point(*p2),GM.Point(*p3),GM.Point(*p4),GM.Point(*p1)]
         self.bound_marker.id = 2
+
+        self.timer_marker = VM.Marker()
+        self.timer_marker.action = VM.Marker.ADD
+        self.timer_marker.color = ColorRGBA(*[1.0, 0.05, 0.05, 1.0])
+        self.timer_marker.header.frame_id = rospy.get_namespace() + SIMFRAME 
+        self.timer_marker.lifetime = rospy.Duration(100*DT)
+        self.timer_marker.scale = GM.Vector3(*[0.01, 0.01, 0.01])
+        self.timer_marker.type = VM.Marker.TEXT_VIEW_FACING
+        self.timer_marker.scale = GM.Vector3(*[0.1, 0.1, 0.1])
+        self.timer_marker.pose.position.x = 0.45;
+    	self.timer_marker.pose.position.y = -0.2;
+    	self.timer_marker.pose.position.z = 1.0;
+    	self.timer_marker.pose.orientation.x = 0.;
+    	self.timer_marker.pose.orientation.y = 0.0;
+    	self.timer_marker.pose.orientation.z = 0.2;
+    	self.timer_marker.pose.orientation.w = 1.0;
+    	self.timer_marker.text = "X"
+    	self.timer_marker.id = 3
         
         self.markers.markers.append(self.mass_marker)
         self.markers.markers.append(self.draw_marker)
         self.markers.markers.append(self.bound_marker)
+        self.markers.markers.append(self.timer_marker)
         
         #set up subsampling of points
         self.subsamp = 0
@@ -94,11 +113,12 @@ class Visualizer_Cursor:
         if self.subsamp == 0:    
             self.draw_marker.points.append(GM.Point(*ptransc))
             self.subsamp +=1
-        elif self.subsamp == 10:
+        elif self.subsamp == 2:
             self.subsamp = 0
         else:
             self.subsamp+=1
         self.mass_marker.pose = GM.Pose(position=GM.Point(*ptransc))
+        self.timer_marker.text = "%3.2f" % data.sys_time
         self.marker_pub.publish(self.markers)
                 
 def main():

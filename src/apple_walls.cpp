@@ -32,7 +32,7 @@ SERVICES:N/A
 #include"Virtual_Fixt/imagewalls.hpp"
 
 const double SCALE = 1.0;
-const double DT=1./100.;
+const double DT=1./60.;
 const double Kp = 1.0;
 const double Kd = 50.;
 

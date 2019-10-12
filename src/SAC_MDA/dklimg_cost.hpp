@@ -24,10 +24,10 @@ class dklcost {
     int T_index,t_now=0;
     cv::Mat img;
     dklcost(double _Q, arma::mat _R,int _K,arma::mat _sigma, int _X1,int _X2,cv::Mat _img,double _L1,double _L2,
-        double _T,system *_sys){
+        double _T,double _HIST, system *_sys){
       Q=_Q; R=_R; sys=_sys; K = _K; img = _img; T=_T; // initialize with Q, R, sys, img, and the domain
       X1 = _X1; X2=_X2; L1 = _L1; L2 = _L2; X_DKL<<X1<<X2; sigma=_sigma;
-      T_index = T/sys->dt;
+      T_index = T/sys->dt;MAXINT = _HIST/sys->dt;cout<<MAXINT<<endl;
       omp_set_dynamic(0); // get rid of dynamic stuff
       omp_set_num_threads(16); // set the number of threads
       xpast.set_size(sys->Xcurr.n_rows,300/sys->dt);//initialize xpast to hold up to fiveminutes of data
@@ -68,7 +68,6 @@ template<class system> arma::vec dklcost<system>::dldx (const arma::vec&x, const
 template<class system> double dklcost<system>::calc_cost (const arma::mat& x,const arma::mat& u){
   double J1 = 0.,Jtemp;
   arma::mat xjoined;
-  
   if(t_now<=MAXINT){xjoined = arma::join_rows(xpast.cols(0,t_now),x);}
   else{xjoined = arma::join_rows(xpast.cols(t_now-MAXINT,t_now),x);};
   qs_disc(xjoined);
