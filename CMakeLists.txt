@@ -76,7 +76,31 @@ add_executable(applewalls src/apple_walls.cpp)
 add_dependencies(applewalls ${catkin_EXPORTED_TARGETS})
 target_link_libraries(applewalls ${catkin_LIBRARIES})
 
+add_executable(bananawalls src/banana_walls.cpp)
+add_dependencies(bananawalls ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bananawalls ${catkin_LIBRARIES})
+
+add_executable(housewalls src/house_walls.cpp)
+add_dependencies(housewalls ${catkin_EXPORTED_TARGETS})
+target_link_libraries(housewalls ${catkin_LIBRARIES})
+
+add_executable(umbrellawalls src/umbrella_walls.cpp)
+add_dependencies(umbrellawalls ${catkin_EXPORTED_TARGETS})
+target_link_libraries(umbrellawalls ${catkin_LIBRARIES})
+
 add_executable(appledkl src/apple_dkl.cpp)
 add_dependencies(appledkl ${catkin_EXPORTED_TARGETS})
 target_link_libraries(appledkl ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
+
+add_executable(bananadkl src/banana_dkl.cpp)
+add_dependencies(bananadkl ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bananadkl ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
+
+add_executable(housedkl src/house_dkl.cpp)
+add_dependencies(housedkl ${catkin_EXPORTED_TARGETS})
+target_link_libraries(housedkl ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
+
+add_executable(umbrelladkl src/umbrella_dkl.cpp)
+add_dependencies(umbrelladkl ${catkin_EXPORTED_TARGETS})
+target_link_libraries(umbrelladkl ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
 

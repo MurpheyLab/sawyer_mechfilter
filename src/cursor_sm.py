@@ -119,7 +119,8 @@ class Visualizer_Cursor:
             self.subsamp+=1
         self.mass_marker.pose = GM.Pose(position=GM.Point(*ptransc))
         self.timer_marker.text = "%3.2f" % data.sys_time
-        self.marker_pub.publish(self.markers)
+        if data.sys_time<=10.:
+            self.marker_pub.publish(self.markers)
                 
 def main():
     """

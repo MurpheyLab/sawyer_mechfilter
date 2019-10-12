@@ -1,0 +1,38 @@
+<launch>
+  <!-- ARGUMENT DEFINITIONS -->
+  <arg name="vis" default="false" /> <!-- run rviz? -->
+  <arg name="apple" default="false" />
+  <arg name="banana" default="false" />
+  <arg name="house" default="false" />
+  <arg name="umbrella" default="false" /> 
+  
+    <!-- startup simulator node -->
+    <group if="$(arg apple)">
+    <node pkg="sawyer_humcpp" type="appledkl" name="appledkl"
+	  respawn="true" output="screen" />
+    </group> 
+	  <group if="$(arg banana)">
+    	<node pkg="sawyer_humcpp" type="bananadkl" name="bananadkl"
+	  	respawn="true" output="screen" />
+		</group> 
+		<group if="$(arg house)">
+    	<node pkg="sawyer_humcpp" type="housedkl" name="housedkl"
+	  	respawn="true" output="screen" />
+		</group> 
+		<group if="$(arg umbrella)">
+    	<node pkg="sawyer_humcpp" type="umbrelladkl" name="umbrelladkl"
+	  	respawn="true" output="screen" />
+		</group> 
+
+		<node pkg="sawyer_humcpp" type="cursor_sm.py" name="cursor_sm"
+	  respawn="true" output="screen" />
+    
+  <!-- rviz if needed -->
+  <group if="$(arg vis)">
+    <node pkg="rviz" type="rviz" respawn="false" name="rviz" 
+	  args="-d $(find sawyer_humcpp)/launch/apple-view.rviz" />
+  </group>
+
+</launch>
+
+  

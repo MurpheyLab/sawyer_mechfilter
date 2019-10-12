@@ -132,9 +132,9 @@ int main(int argc, char **argv){
     calling ros::spin*/
   ros::init(argc, argv, "walls");
   ros::NodeHandle n;
-  string imageName("/home/kt-fitz/sawyer_ws/src/sawyer_humcpp/src/apple.png");
-  imagewalls apple(imageName, 100.,Kp);
-  Walls sim(&n, &apple);
+  string imageName("/home/kt-fitz/sawyer_ws/src/sawyer_humcpp/src/umbrella.png");
+  imagewalls umbrella(imageName, 100.,Kp);
+  Walls sim(&n, &umbrella);
   ros::Timer timer = n.createTimer(ros::Duration(DT), &Walls::timercall, &sim);
   ros::spin();
 return 0;
