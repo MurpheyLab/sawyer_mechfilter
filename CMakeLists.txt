@@ -52,9 +52,9 @@ add_executable(impede_test src/impede_test.cpp)
 add_dependencies(impede_test ${catkin_EXPORTED_TARGETS})
 target_link_libraries(impede_test ${catkin_LIBRARIES} armadillo)
 
-add_executable(draw_test src/draw_test.cpp)
-add_dependencies(draw_test ${catkin_EXPORTED_TARGETS})
-target_link_libraries(draw_test ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
+add_executable(draw_free src/draw_free.cpp)
+add_dependencies(draw_free ${catkin_EXPORTED_TARGETS})
+target_link_libraries(draw_free ${catkin_LIBRARIES} armadillo ${OpenCV_LIBS} ${OpenMP_LIBS})
 
 add_executable(motion_test src/motion_impedance.cpp)
 add_dependencies(motion_test ${catkin_EXPORTED_TARGETS})

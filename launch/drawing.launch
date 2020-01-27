@@ -3,7 +3,7 @@
   <arg name="vis" default="false" /> <!-- run rviz? -->
   
     <!-- startup simulator node -->
-    <node pkg="sawyer_humcpp" type="draw_test" name="draw_test"
+    <node pkg="sawyer_humcpp" type="draw_free" name="draw_free"
 	  respawn="true" output="screen" />
     <node pkg="sawyer_humcpp" type="cursor_sm.py" name="cursor"
 	  respawn="true" output="screen" />
