@@ -32,7 +32,7 @@ SIMFRAME = "trep_world"
 MASSFRAME = "cursor"
 
 DT = 1./100.
-T=30.
+T=10.
 class Visualizer_Cursor:
     def __init__(self):
         rospy.loginfo("Initializing Rviz")
@@ -104,6 +104,8 @@ class Visualizer_Cursor:
         self.subsamp = 0
         
     def update_marks(self,data):
+        if data.sys_time==T:
+            rospy.loginfo("Trial Over")
         ptransc = [data.ef[0],data.ef[1],data.ef[2]]
         p = PointStamped()
         p.header.stamp = rospy.Time.now()
@@ -121,6 +123,7 @@ class Visualizer_Cursor:
         self.timer_marker.text = "%3.2f" % data.sys_time
         if data.sys_time<=T:
             self.marker_pub.publish(self.markers)
+        
                 
 def main():
     """

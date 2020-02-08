@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import random
 
-TRAINNUM=30
+TRAINNUM=20
 
 filename = "image-testing-order.csv"
 columns = ['trial_num','image','image_counter']
@@ -18,9 +18,9 @@ images = {
 
 trialnum = 1
 imagecheck = np.zeros(4)
-while np.sum(imagecheck)<60:
+while np.sum(imagecheck)<40:
     image = random.randint(0,3)
-    if imagecheck[image]<15:
+    if imagecheck[image]<10:
     	row=[trialnum,images[image+1],imagecheck[image]+1]
         with open(filename,'a') as csvfile:
       	    testwriter = csv.writer(csvfile,delimiter=',')
@@ -32,11 +32,11 @@ imagecheck = np.zeros(4)
 while np.sum(imagecheck)<4:
     image = random.randint(0,3)
     if imagecheck[image]<1:
-        row=[str(trialnum)+"-"+str(trialnum+TRAINNUM+14),images[image+1],TRAINNUM+15]
+        row=[str(trialnum)+"-"+str(trialnum+TRAINNUM+10),images[image+1],TRAINNUM+10]
         with open(filename,'a') as csvfile:
       	    testwriter = csv.writer(csvfile,delimiter=',')
             testwriter.writerow(row)
-            trialnum+=TRAINNUM+15
+            trialnum+=TRAINNUM+10
         imagecheck[image]=imagecheck[image]+1   
 
 file2 = "subject-testing-order.csv"

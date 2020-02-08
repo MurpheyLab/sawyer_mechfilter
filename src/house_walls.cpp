@@ -106,7 +106,7 @@ class Walls{
     arma::vec Fwall = apple->wallforce(x,y);
     currstate.bf = Fwall(0);
     interactopt.force_command = {Fwall(0)-Kd*currstate.dq[0],Fwall(1)-Kd*currstate.dq[1],0.,0.,0.,0.};
-    if(abs(Fwall(0))>0.25 or abs(Fwall(1))>0.25){ROS_INFO("Boundary Violation");};
+    //if(abs(Fwall(0))>0.25 or abs(Fwall(1))>0.25){ROS_INFO("Boundary Violation");};
     interactopt.interaction_frame.position.x = 0;
     interactopt.interaction_frame.position.y =0;
     interactopt.interaction_frame.position.z  =0;

@@ -87,13 +87,8 @@ class DrawSimulator{
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
     if(initcon==false) {return;};
-    if(currstate.accept){
-      interact_options(false);
-      xvd = (xprev[2]-xprev[1])/DT;
-      yvd = (yprev[2]-yprev[1])/DT;
-    }
-      else{interact_options(true);};
-    //interactCommand.publish(interactopt);
+    interact_options(false);
+    interactCommand.publish(interactopt);
    };
   
   //state update from end effector

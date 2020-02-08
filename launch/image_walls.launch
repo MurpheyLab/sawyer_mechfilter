@@ -24,8 +24,7 @@
 	  	respawn="true" output="screen" />
 		</group>
 
-		<!-- start visualization -->
-    <node pkg="sawyer_humcpp" type="cursor_sm.py" name="cursor_sm"
+		<node pkg="sawyer_humcpp" type="cursor_sm.py" name="cursor_sm"
 	  respawn="true" output="screen" />
     
   <!-- rviz if needed -->

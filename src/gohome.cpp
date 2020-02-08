@@ -74,7 +74,7 @@ class Homing{
       pose_now = state.pose;
       double eta = 0.02;
       if(abs(pose_now.position.x-0.6)<eta and abs(pose_now.position.y-0.1)<eta 
-        and abs(pose_now.position.z-0.2)<eta
+        and abs(pose_now.position.z-0.1)<eta
         and abs(pose_now.orientation.x-0.707)<eta and abs(pose_now.orientation.y-0.707)<eta
         and abs(pose_now.orientation.z)<0.01 and abs(pose_now.orientation.w)<0.01){
         pose_init = state.pose;
@@ -109,7 +109,7 @@ class Homing{
     wpt.options.max_rotational_speed=1.57;
     wpt.options.max_rotational_accel = 1.57;
     wpt.options.corner_distance = 0.5;
-    wpt.joint_positions = {-0.106, -0.922, 0.005, 1.771, -0.005, 0.716, 3.218};
+    wpt.joint_positions = {-0.194, -0.745, -0.015, 1.765, -0.106, 0.55, 3.218};
     traj.waypoints.push_back(wpt);
     traj.trajectory_options.interpolation_type = "JOINT";
     traj.trajectory_options.interaction_control=false;
