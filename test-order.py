@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import random
 
-TRAINNUM=20
+TRAINNUM=10
 
 filename = "image-testing-order.csv"
 columns = ['trial_num','image','image_counter']
@@ -45,7 +45,7 @@ group = {
     0:"virtual walls",
     1:"hybrid shared control"}
 
-SAMPS = 42
+SAMPS = 16
 acheck = np.zeros(2)
 subnum = 1
 while subnum<=SAMPS:

@@ -104,7 +104,7 @@ class Visualizer_Cursor:
         self.subsamp = 0
         
     def update_marks(self,data):
-        if data.sys_time==T:
+        if data.sys_time>=T-(1./60.) and data.sys_time<=T+(1./60.):
             rospy.loginfo("Trial Over")
         ptransc = [data.ef[0],data.ef[1],data.ef[2]]
         p = PointStamped()
