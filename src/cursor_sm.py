@@ -27,6 +27,8 @@ import tf
 from tf import transformations as TR
 from geometry_msgs.msg import PointStamped
 from sawyer_humcpp.msg import mdasys
+from std_msgs.msg import Bool
+import time
 
 SIMFRAME = "trep_world"
 MASSFRAME = "cursor"
@@ -39,6 +41,7 @@ class Visualizer_Cursor:
         #setup publisher, subscribers,timers:
         self.mda_sub = rospy.Subscriber("mda_topic",mdasys,self.update_marks)
         self.marker_pub = rospy.Publisher("visualization_marker_array", VM.MarkerArray,queue_size=3)
+        self.trial_pub = rospy.Publisher("trial_topic", Bool,queue_size=1)
         self.br = tf.TransformBroadcaster()
         ######SETUP MARKER ARRAY######
         self.markers = VM.MarkerArray()
@@ -106,6 +109,7 @@ class Visualizer_Cursor:
     def update_marks(self,data):
         if data.sys_time>=T-(1./60.) and data.sys_time<=T+(1./60.):
             rospy.loginfo("Trial Over")
+            
         ptransc = [data.ef[0],data.ef[1],data.ef[2]]
         p = PointStamped()
         p.header.stamp = rospy.Time.now()
@@ -123,7 +127,13 @@ class Visualizer_Cursor:
         self.timer_marker.text = "%3.2f" % data.sys_time
         if data.sys_time<=T:
             self.marker_pub.publish(self.markers)
-        
+            ready = False
+            while ready == False:
+                switch = raw_input("Is the subject ready to continue? [y/n]")
+                if switch == 'y' or switch == "Y" or switch == "yes" or switch == "Yes":
+                    ready = True
+            time.sleep(1.0)
+            self.trial_pub.publish(True)
                 
 def main():
     """

@@ -24,6 +24,7 @@ class DoubleInt {
         inline arma::mat dfdx(const arma::vec& x, const arma::vec& u);
         inline arma::mat hx(const arma::vec& x);
         void step(void);
+        void reset(void);
         
         
 };
@@ -66,6 +67,10 @@ inline arma::mat DoubleInt::hx(const arma::vec& x){
 void DoubleInt::step(){
     Xcurr = RK4_step(this,Xcurr,Ucurr,dt);
     tcurr = tcurr+dt;
+};
+
+void DoubleInt::reset(){
+    tcurr = 0.0;
 };
 
 
