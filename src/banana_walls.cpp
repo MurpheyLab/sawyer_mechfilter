@@ -22,6 +22,7 @@ SERVICES:N/A
 #include <iostream>
 #include <ros/console.h>
 #include <geometry_msgs/Pose.h>
+#include <std_msgs/Bool.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <intera_core_msgs/InteractionControlCommand.h>
 #include <intera_core_msgs/EndpointState.h>
@@ -44,6 +45,7 @@ class Walls{
   ros::Subscriber cursor_state;
   ros::Publisher interactCommand;
   ros::Publisher mda_pub;
+  ros::Subscriber reset_flag;
   intera_core_msgs::InteractionControlCommand interactopt;
   sawyer_humcpp::mdasys currstate;
   tf2::Quaternion q_acc, q_ep,q_ep_force,q_ep_vel;
@@ -57,6 +59,7 @@ class Walls{
     //setup publishers & subscribers
     mda_pub = nh->advertise<sawyer_humcpp::mdasys>("mda_topic", 5);
     cursor_state = nh->subscribe("/robot/limb/right/endpoint_state",5,&Walls::update_state,this);
+    reset_flag = nh->subscribe("trial_topic",5,&Walls::reset_sys,this);
     interactCommand = nh->advertise<intera_core_msgs::InteractionControlCommand>("/robot/limb/right/interaction_control_command",1);  
     
   };
@@ -121,9 +124,13 @@ class Walls{
     interactopt.rotations_for_constrained_zeroG = false;
   };
   
-  void set_traj(){ 
-         
-  };
+ void reset_sys(const std_msgs::Bool& flag){
+    if(flag.data==true){
+    ROS_INFO("Starting New Trial");
+    t0=ros::Time::now();
+    initcon=false;
+    };
+  }; 
         
 };
     

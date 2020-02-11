@@ -103,13 +103,23 @@ class Visualizer_Cursor:
         self.markers.markers.append(self.bound_marker)
         self.markers.markers.append(self.timer_marker)
         
+        self.testno = 0
         #set up subsampling of points
         self.subsamp = 0
         
     def update_marks(self,data):
-        if data.sys_time>=T-(1./60.) and data.sys_time<=T+(1./60.):
+        if data.sys_time>=T and data.sys_time<=T+DT:
             rospy.loginfo("Trial Over")
-            
+            self.testno = self.testno+1
+            print "TRIAL NO",self.testno
+            self.marker_pub.publish(self.markers)
+            ready = False
+            while ready == False:
+                switch = raw_input("Is the subject ready to continue? [y/n]")
+                if switch == 'y' or switch == "Y" or switch == "yes" or switch == "Yes":
+                    ready = True
+            time.sleep(1.0)
+            self.trial_pub.publish(True)
         ptransc = [data.ef[0],data.ef[1],data.ef[2]]
         p = PointStamped()
         p.header.stamp = rospy.Time.now()
@@ -127,13 +137,6 @@ class Visualizer_Cursor:
         self.timer_marker.text = "%3.2f" % data.sys_time
         if data.sys_time<=T:
             self.marker_pub.publish(self.markers)
-            ready = False
-            while ready == False:
-                switch = raw_input("Is the subject ready to continue? [y/n]")
-                if switch == 'y' or switch == "Y" or switch == "yes" or switch == "Yes":
-                    ready = True
-            time.sleep(1.0)
-            self.trial_pub.publish(True)
                 
 def main():
     """

@@ -22,6 +22,7 @@ SERVICES:N/A
 #include <iostream>
 #include <ros/console.h>
 #include <geometry_msgs/Pose.h>
+#include <std_msgs/Bool.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <intera_core_msgs/InteractionControlCommand.h>
 #include <intera_core_msgs/EndpointState.h>
@@ -61,6 +62,7 @@ class DrawSimulator{
   ros::Publisher mda_pub;
   ros::Subscriber cursor_state;
   ros::Subscriber end_acc;
+  ros::Subscriber reset_flag;
   double xprev[3];
   double yprev[3];
   double veld = 0.0;
@@ -80,7 +82,7 @@ class DrawSimulator{
     interactCommand = nh->advertise<intera_core_msgs::InteractionControlCommand>("/robot/limb/right/interaction_control_command",1);
     cursor_state = nh->subscribe("/robot/limb/right/endpoint_state",5,&DrawSimulator::update_state,this);
     end_acc = nh->subscribe("/robot/accelerometer/right_accelerometer/state",5,&DrawSimulator::calc_input,this);
-    
+    reset_flag = nh->subscribe("trial_topic",5,&DrawSimulator::reset_sys,this);
     };
   
   //set up timer callback fxn
@@ -134,6 +136,15 @@ class DrawSimulator{
     tf2::Quaternion q_a_temp;
     q_a_temp.setValue(imu.linear_acceleration.x,imu.linear_acceleration.y,imu.linear_acceleration.z,0.0);
     q_acc = q_ep*q_a_temp*q_ep.inverse();
+  };
+  
+  void reset_sys(const std_msgs::Bool& flag){
+    if(flag.data==true){
+    ROS_INFO("Starting New Trial");
+    sys->reset();
+    initcon=0;
+    };
+    
   };
   
   //setting the impedance of the interaction options message
