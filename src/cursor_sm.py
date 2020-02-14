@@ -120,6 +120,8 @@ class Visualizer_Cursor:
                     ready = True
             time.sleep(1.0)
             self.trial_pub.publish(True)
+        if data.sys_time >=T:
+            self.draw_marker.points=[]
         ptransc = [data.ef[0],data.ef[1],data.ef[2]]
         p = PointStamped()
         p.header.stamp = rospy.Time.now()
