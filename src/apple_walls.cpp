@@ -67,7 +67,7 @@ class Walls{
   //set up timer callback fxn
   void timercall(const ros::TimerEvent& event){
     if(initcon==false) {return;};
-    if(currstate.sys_time>10.){
+    if(currstate.sys_time>30.){
      interactopt.force_command = {0.,0.,0.,0.,0.,0.};
      interactCommand.publish(interactopt);
      return;};

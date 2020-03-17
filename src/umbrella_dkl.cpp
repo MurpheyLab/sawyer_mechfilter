@@ -89,7 +89,7 @@ class DKLSimulator{
   void timercall(const ros::TimerEvent& event){
     tcurr = ros::Time::now() - t0;
     if(initcon==false) {return;};
-    if(sys->tcurr>10.){
+    if(sys->tcurr>30.){
      interact_options(false);
      interactCommand.publish(interactopt);
      return;};

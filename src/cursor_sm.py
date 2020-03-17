@@ -34,7 +34,7 @@ SIMFRAME = "trep_world"
 MASSFRAME = "cursor"
 
 DT = 1./100.
-T=10.
+T=30.
 class Visualizer_Cursor:
     def __init__(self):
         rospy.loginfo("Initializing Rviz")
