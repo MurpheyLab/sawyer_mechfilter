@@ -2,7 +2,7 @@ import csv
 import numpy as np
 from numpy import genfromtxt
 
-DIR = "/home/kt-fitz/data/"
+DIR = "/home/kt-fitz/data/raw/"
 
 
 def crop_data(oldfile):
@@ -38,11 +38,11 @@ filetypes = {
     12:"_umbrella_h_set02_mda.csv",
     13:"_umbrella_p_set03_mda.csv",}
 
-for subj in range(2,28):
+for subj in range(14,15):
     substr = str(subj).zfill(2)
-    print "Cleaning data of subject " substr
+    print "Cleaning data of subject ", substr
     for f in range(1,14):
         try:
             crop_data(DIR+"s"+substr+filetypes[f])
         except:
-            print "No file of type "+"s02"+filetypes[f]
+            print "No file of type s"+substr+filetypes[f]
