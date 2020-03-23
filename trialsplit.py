@@ -41,6 +41,12 @@ def splitter(sub,f):
     asstlab = oldfile[oldfile.rfind('_set')-1:oldfile.rfind('_set')]
     metrics = []
     tf=10.
+    datanames = genfromtxt(oldfile,delimiter=',',dtype=str)
+    columns = datanames[0,:]
+    del datanames
+    qind = np.where(columns=='field.q0')[0][0]
+    dqind = np.where(columns=='field.dq0')[0][0]
+    paaind = np.where(columns=='field.accept')[0][0]
     data = genfromtxt(oldfile,delimiter=',',dtype=float)
     data = np.delete(data,0,0)
     dlabel = genfromtxt(labels,delimiter=',',dtype=str)
@@ -58,44 +64,53 @@ def splitter(sub,f):
         trialflag=True
         init=jj
         endstate = init+1001
+        kldiv=1000.
         #successtemp = 0.0
         #balancecounter = 0.0
-        x =[];y=[];
+        x =[];y=[];v=[100.]*10
         while trialflag == True:
             j=j+1
             jj=jj+1
             try:
-                state = [data[jj,5],data[jj,6],data[jj,7],data[jj,8]]
+                x.append(data[jj,qind]); y.append(data[jj,qind+1])
+                v.append((data[jj,dqind]**2+data[jj,dqind+1]**2)**0.5)
             except:
-                state = [data[jj-1,5],data[jj-1,6],data[jj-1,7],data[jj-1,8]]
-            x.append(state[0])
-            y.append(state[1])
-            #print jj
+                x.append(data[jj-1,5]); y.append(data[jj-1,6])
+                v.append((data[jj-1,dqind]**2+data[jj-1,dqind+1]**2)**0.5)
+            
+            v=v[1:]; 
+                        
             if jj==(NumSamps) or time[jj]<time[jj-1]:
                 trialflag=False; trialnum=trialnum+1; #print "Trial ", trialnum
-            #elif abs(state[2])<= 0.0001 and abs(state[3])<=0.0001 and endstate == init+1002: 
-                #endstate = jj; 
+                if endstate==init+1001: endstate=jj-1
+            elif sum(v)/len(v)<= 10**(-2) and endstate == init+1001 and time[jj]>6.0: 
+                endstate = jj-10; kldiv=sum(v)/len(v); #print kldiv
                    
-        #print j
         end = init+j-1
         trialfull= data[init:end]
         trialcrop = data[init:endstate]
-        paa = np.mean(data[init:end,-1])
-        x = np.array(x)
-        y=np.array(y)
-        #[metric1,metric2] =importedfuction(x,y)
+        paa = np.mean(data[init:end,paaind])
+        x=x[:-1];x = np.array(x)
+        y=y[:-1];y=np.array(y)
+        #[kldiv,distance from nearest black pixel] =importedfuction(x,y)
         if endstate>=NumSamps: endstate = jj-1
         if session==1:
             metrics.append(np.hstack((int(sub),images[dlabel[trialnum,1]],session,
-                                      int(dlabel[trialnum,2]),assist[asstlab],time[endstate],
-                                      300,paa)))
+                                      float(dlabel[trialnum,2]),assist[asstlab],time[endstate],
+                                      kldiv,paa)))
         elif session==2:
             imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
             metrics.append(np.hstack((int(sub),images[imglab],session,
                                       (session*10)+trialnum-10,assist[asstlab],time[endstate],
                                       300,paa)))
-        #print "Trial ",trialnum,"trial", dlabel[trialnum,0], dlabel[trialnum,1]
-        #plt.scatter(x,y)
+        elif session==3:
+            imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
+            metrics.append(np.hstack((int(sub),images[imglab],session,
+                                      (session*10)+trialnum-10,assist[asstlab],time[endstate],
+                                      300,paa)))
+        #print "Trial ",trialnum,"trial", dlabel[trialnum,0], dlabel[trialnum,1],time[endstate]
+        #plt.plot(x)
+        #plt.plot(y)
         #plt.show()
         
     
@@ -104,6 +119,7 @@ def splitter(sub,f):
     #norm[0] = max(np.array(metrics)[:,0])
     #print norm
     metlabels="subject,image,set,trial,assistance,TimeUsed,KLdiv,paa"
+    #print metrics
     np.savetxt(oldfile[:oldfile.rfind('-c')] + "-metrics.csv",metrics,fmt="%9.6f",delimiter=",",header=metlabels,comments='')
     return #norm[0]
 
@@ -111,7 +127,7 @@ def splitter(sub,f):
 
 for subj in range(2,28):
     print"PROCESSING SUBJECT", subj
-    for f in range(1,2):
+    for f in range(1,14):
         try:
             splitter(str(subj).zfill(2),f)
         except:
