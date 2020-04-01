@@ -1,10 +1,9 @@
 from numpy import genfromtxt
 import numpy as np
 import matplotlib.pyplot as plt
-#import sys
-#sys.path.append('/home/kt-fitz/act3d_ws/src/mda_act3d_cart/src')
-
+import imgwalls as wall
 from multiprocessing import Pool
+
 DIR = "/home/kt-fitz/data/"
 #MASTERFILE = 
 images = {
@@ -13,6 +12,18 @@ images = {
     "house":3,
     "umbrella":4,
     "discard":0}
+
+applewall = wall.imagewalls("src/apple.png")
+banwall = wall.imagewalls("src/banana.png")
+housewall = wall.imagewalls("src/house.png")
+umbwall = wall.imagewalls("src/umbrella.png")
+
+walls = {
+    "apple":applewall,
+    "banana":banwall,
+    "house":housewall,
+    "umbrella":umbwall}
+    
 assist = {
     "c":0,
     "h":1,
@@ -34,8 +45,12 @@ filetypes = {
     12:"_umbrella_h_set02-clean.csv",
     13:"_umbrella_p_set03-clean.csv",}
 
-def splitter(sub,f):
-    oldfile = DIR+"s"+sub+filetypes[f]
+def splitter(input):
+    sub=str(input[0]).zfill(2)
+    f=input[1]
+    scale =2200.
+    if f ==2 or f==5 or f==8 or f==11: scale =1.
+    oldfile = DIR+"s"+sub+filetypes[f];
     labels = DIR+"raw/image-testing-order-s"+sub+".csv"
     session = int(oldfile[oldfile.rfind('set')+3:oldfile.rfind('-cl')])
     asstlab = oldfile[oldfile.rfind('_set')-1:oldfile.rfind('_set')]
@@ -65,15 +80,22 @@ def splitter(sub,f):
         init=jj
         endstate = init+1001
         kldiv=1000.
-        #successtemp = 0.0
-        #balancecounter = 0.0
+        distcounter = []
         x =[];y=[];v=[100.]*10
+        if session ==1:
+            imglab = dlabel[trialnum+1,1]
+            tlab = float(dlabel[trialnum+1,2]);
+            scale = 2200.
+        elif session ==2 or session ==3:
+            imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
+            tlab = (session*10)+trialnum-10
         while trialflag == True:
             j=j+1
             jj=jj+1
             try:
                 x.append(data[jj,qind]); y.append(data[jj,qind+1])
                 v.append((data[jj,dqind]**2+data[jj,dqind+1]**2)**0.5)
+                distcounter.append(walls[imglab].findnearest(x[-1],y[-1])[2])
             except:
                 x.append(data[jj-1,5]); y.append(data[jj-1,6])
                 v.append((data[jj-1,dqind]**2+data[jj-1,dqind+1]**2)**0.5)
@@ -92,23 +114,11 @@ def splitter(sub,f):
         paa = np.mean(data[init:end,paaind])
         x=x[:-1];x = np.array(x)
         y=y[:-1];y=np.array(y)
+        dist = sum(distcounter)/len(distcounter)
         #[kldiv,distance from nearest black pixel] =importedfuction(x,y)
         if endstate>=NumSamps: endstate = jj-1
-        if session==1:
-            metrics.append(np.hstack((int(sub),images[dlabel[trialnum,1]],session,
-                                      float(dlabel[trialnum,2]),assist[asstlab],time[endstate],
-                                      kldiv,paa)))
-        elif session==2:
-            imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
-            metrics.append(np.hstack((int(sub),images[imglab],session,
-                                      (session*10)+trialnum-10,assist[asstlab],time[endstate],
-                                      300,paa)))
-        elif session==3:
-            imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
-            metrics.append(np.hstack((int(sub),images[imglab],session,
-                                      (session*10)+trialnum-10,assist[asstlab],time[endstate],
-                                      300,paa)))
-        #print "Trial ",trialnum,"trial", dlabel[trialnum,0], dlabel[trialnum,1],time[endstate]
+        metrics.append(np.hstack((input[0],images[imglab],session, tlab,assist[asstlab],
+                                  time[endstate], dist,paa)))
         #plt.plot(x)
         #plt.plot(y)
         #plt.show()
@@ -118,20 +128,23 @@ def splitter(sub,f):
     #norm = np.ones_like(metrics[0,:])
     #norm[0] = max(np.array(metrics)[:,0])
     #print norm
-    metlabels="subject,image,set,trial,assistance,TimeUsed,KLdiv,paa"
+    metlabels="subject,image,set,trial,assistance,TimeUsed,meandist,paa"
     #print metrics
     np.savetxt(oldfile[:oldfile.rfind('-c')] + "-metrics.csv",metrics,fmt="%9.6f",delimiter=",",header=metlabels,comments='')
     return #norm[0]
 
-
+def func(x):
+    try:
+        splitter(x)
+    except:
+        print "Could not find s"+str(x[0]).zfill(2)+filetypes[x[1]]
+    return
 
 for subj in range(2,28):
     print"PROCESSING SUBJECT", subj
-    for f in range(1,14):
-        try:
-            splitter(str(subj).zfill(2),f)
-        except:
-            print "Could not find s"+str(subj).zfill(2)+filetypes[f]
+    list1 = [[subj,f] for f in range(1,14)]
+    p=Pool(8)
+    p.map(func,list1)
 
 """    
 p=Pool(6)
