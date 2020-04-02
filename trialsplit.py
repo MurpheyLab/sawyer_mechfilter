@@ -5,7 +5,7 @@ import imgwalls as wall
 from multiprocessing import Pool
 
 DIR = "/home/kt-fitz/data/"
-#MASTERFILE = 
+ 
 images = {
     "apple":1,
     "banana":2,
@@ -66,10 +66,7 @@ def splitter(input):
     data = np.delete(data,0,0)
     dlabel = genfromtxt(labels,delimiter=',',dtype=str)
     NumSamps = np.shape(data)[0]
-    #print NumSamps
     time = [row[1] for row in data]
-    #x = [row[3] for row in data]
-    #dth = [row[4] for row in data]
     dT = (time[6]-time[5])
     intIndex = int(round(tf/dT +2))
     jj=0
@@ -95,7 +92,7 @@ def splitter(input):
             try:
                 x.append(data[jj,qind]); y.append(data[jj,qind+1])
                 v.append((data[jj,dqind]**2+data[jj,dqind+1]**2)**0.5)
-                distcounter.append(walls[imglab].findnearest(x[-1],y[-1])[2])
+                distcounter.append(walls[imglab].findnearest(scale*x[-1],scale*y[-1])[2])
             except:
                 x.append(data[jj-1,5]); y.append(data[jj-1,6])
                 v.append((data[jj-1,dqind]**2+data[jj-1,dqind+1]**2)**0.5)
@@ -114,56 +111,36 @@ def splitter(input):
         paa = np.mean(data[init:end,paaind])
         x=x[:-1];x = np.array(x)
         y=y[:-1];y=np.array(y)
+        maxdist = max(distcounter)
         dist = sum(distcounter)/len(distcounter)
+        distvar = np.var(distcounter)
+        distcrop=distcounter[0:(endstate-init)]
+        distTU = sum(distcrop)/len(distcrop)
+        distvarTU = np.var(distcrop)#sum([(i-distTU)**2 for i in distcrop])/len(distcrop)
         #[kldiv,distance from nearest black pixel] =importedfuction(x,y)
         if endstate>=NumSamps: endstate = jj-1
         metrics.append(np.hstack((input[0],images[imglab],session, tlab,assist[asstlab],
-                                  time[endstate], dist,paa)))
+                                  time[endstate], dist,distvar,distTU,distvarTU,maxdist,paa)))
         #plt.plot(x)
         #plt.plot(y)
         #plt.show()
         
     
     metrics = np.array(metrics)
-    #norm = np.ones_like(metrics[0,:])
-    #norm[0] = max(np.array(metrics)[:,0])
-    #print norm
-    metlabels="subject,image,set,trial,assistance,TimeUsed,meandist,paa"
-    #print metrics
+    metlabels="subject,image,set,trial,assistance,TimeUsed,meand,vard,meandTU,vardTU,maxdist,paa"
     np.savetxt(oldfile[:oldfile.rfind('-c')] + "-metrics.csv",metrics,fmt="%9.6f",delimiter=",",header=metlabels,comments='')
-    return #norm[0]
+    return 
 
 def func(x):
+    print "Processing Subject ", x[0], " File ",x[1]
     try:
         splitter(x)
     except:
         print "Could not find s"+str(x[0]).zfill(2)+filetypes[x[1]]
     return
 
-for subj in range(2,28):
-    print"PROCESSING SUBJECT", subj
-    list1 = [[subj,f] for f in range(1,14)]
-    p=Pool(8)
-    p.map(func,list1)
+list1 = [[subj,f] for f in range(1,14) for subj in range(5,28)]
+p=Pool(8)
+#p.map(func,list1)
 
-"""    
-p=Pool(6)
-list1 = [nomda[subj] for subj in nomda if nomda.get(subj) and subj<42]
-p.map(splitter,list1)
-list2 = [mda[subj] for subj in mda if mda.get(subj)]
-p.map(splitter,list2)
-#list3 = [nomda2[subj] for subj in nomda2 if nomda2.get(subj)]
-#p.map(splitter,list3)
-"""
-"""
-for subj in xrange(1,28):
-    print "Subject", subj, " is processing."
-    if nomda.get(subj):
-        index=splitter(nomda[subj],0)
-    if mda.get(subj):
-        index=splitter(mda[subj],0)
-    if nomda2.get(subj):
-        index=splitter(nomda2[subj],0)
-index=splitter(nomda[51],0)
-#index=splitter("/home/kt-fitz/data/ref/s1-noMDA-expert_trep.csv",0)
-"""
+
