@@ -49,7 +49,9 @@ def splitter(input):
     sub=str(input[0]).zfill(2)
     f=input[1]
     scale =2200.
+    offset = 0.
     if f ==2 or f==5 or f==8 or f==11: scale =1.
+    if f==3 or f==6 or f==9 or f==12: offset = 0.5
     oldfile = DIR+"s"+sub+filetypes[f];
     labels = DIR+"raw/image-testing-order-s"+sub+".csv"
     session = int(oldfile[oldfile.rfind('set')+3:oldfile.rfind('-cl')])
@@ -82,7 +84,6 @@ def splitter(input):
         if session ==1:
             imglab = dlabel[trialnum+1,1]
             tlab = float(dlabel[trialnum+1,2]);
-            scale = 2200.
         elif session ==2 or session ==3:
             imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
             tlab = (session*10)+trialnum-10
@@ -92,7 +93,7 @@ def splitter(input):
             try:
                 x.append(data[jj,qind]); y.append(data[jj,qind+1])
                 v.append((data[jj,dqind]**2+data[jj,dqind+1]**2)**0.5)
-                distcounter.append(walls[imglab].findnearest(scale*x[-1],scale*y[-1])[2])
+                distcounter.append(walls[imglab].findnearest(scale*(x[-1]+offset),scale*(y[-1]+offset))[2])
             except:
                 x.append(data[jj-1,5]); y.append(data[jj-1,6])
                 v.append((data[jj-1,dqind]**2+data[jj-1,dqind+1]**2)**0.5)
