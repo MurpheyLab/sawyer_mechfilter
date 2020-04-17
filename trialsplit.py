@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import imgwalls as wall
 from multiprocessing import Pool
+import csv
 
 DIR = "/home/kt-fitz/data/"
  
@@ -56,6 +57,7 @@ def splitter(input):
     labels = DIR+"raw/image-testing-order-s"+sub+".csv"
     session = int(oldfile[oldfile.rfind('set')+3:oldfile.rfind('-cl')])
     asstlab = oldfile[oldfile.rfind('_set')-1:oldfile.rfind('_set')]
+    newfile = oldfile[:oldfile.rfind('-c')] + "-metrics.csv"
     metrics = []
     tf=10.
     datanames = genfromtxt(oldfile,delimiter=',',dtype=str)
@@ -73,6 +75,10 @@ def splitter(input):
     intIndex = int(round(tf/dT +2))
     jj=0
     trialnum = 0
+    columns = ["subject","image","set","trial","assistance","TimeUsed","meand","vard","meandTU","vardTU","maxdist","paa"]
+    with open(newfile, 'w') as csvfile:
+        testwriter = csv.writer(csvfile,delimiter = ',')
+        testwriter.writerow(columns)
     while jj<NumSamps:
         j=0
         trialflag=True
@@ -87,13 +93,19 @@ def splitter(input):
         elif session ==2 or session ==3:
             imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
             tlab = (session*10)+trialnum-10
+        mir=1.
+        refl=0.
+        if input[0]<=13:
+            if imglab=='apple' or imglab=='umbrella':
+                mir=-1.
+                refl=2200.
         while trialflag == True:
             j=j+1
             jj=jj+1
             try:
-                x.append(data[jj,qind]); y.append(data[jj,qind+1])
+                x.append(refl+(mir*scale*data[jj,qind])+offset); y.append(scale*data[jj,qind+1]+offset)
                 v.append((data[jj,dqind]**2+data[jj,dqind+1]**2)**0.5)
-                distcounter.append(walls[imglab].findnearest(scale*(x[-1]+offset),scale*(y[-1]+offset))[2])
+                distcounter.append(0)#walls[imglab].findnearest(x[-1],y[-1])[2])
             except:
                 x.append(data[jj-1,5]); y.append(data[jj-1,6])
                 v.append((data[jj-1,dqind]**2+data[jj-1,dqind+1]**2)**0.5)
@@ -110,8 +122,9 @@ def splitter(input):
         trialfull= data[init:end]
         trialcrop = data[init:endstate]
         paa = np.mean(data[init:end,paaind])
-        x=x[:-1];x = np.array(x)
-        y=y[:-1];y=np.array(y)
+        x=x[:-1]#;x = np.array(x)
+        y=y[:-1]#;y=np.array(y)
+        q=np.array([x,y])
         maxdist = max(distcounter)
         dist = sum(distcounter)/len(distcounter)
         distvar = np.var(distcounter)
@@ -122,14 +135,20 @@ def splitter(input):
         if endstate>=NumSamps: endstate = jj-1
         metrics.append(np.hstack((input[0],images[imglab],session, tlab,assist[asstlab],
                                   time[endstate], dist,distvar,distTU,distvarTU,maxdist,paa)))
-        #plt.plot(x)
-        #plt.plot(y)
-        #plt.show()
+        row =[input[0],images[imglab],session, tlab,assist[asstlab],time[endstate],dist,distvar,
+              distTU,distvarTU,maxdist,paa]
+        #with open(newfile,'a') as csvfile:
+      	        #testwriter = csv.writer(csvfile,delimiter=',')
+                #testwriter.writerow(row)
+        #print imglab
+        plt.imshow(walls[imglab].img, cmap = 'gray', interpolation = 'bicubic')
+        plt.plot(x,y)
+        plt.show()
         
     
     metrics = np.array(metrics)
     metlabels="subject,image,set,trial,assistance,TimeUsed,meand,vard,meandTU,vardTU,maxdist,paa"
-    np.savetxt(oldfile[:oldfile.rfind('-c')] + "-metrics.csv",metrics,fmt="%9.6f",delimiter=",",header=metlabels,comments='')
+    #np.savetxt(oldfile[:oldfile.rfind('-c')] + "-metricsv2.csv",metrics,fmt="%9.6f",delimiter=",",header=metlabels,comments='')
     return 
 
 def func(x):
@@ -139,8 +158,8 @@ def func(x):
     except:
         print "Could not find s"+str(x[0]).zfill(2)+filetypes[x[1]]
     return
-
-list1 = [[subj,f] for f in range(1,14) for subj in range(5,28)]
+#sublist = [2,3,4,8,9,10,11,12,13,14,15,16,17]#20,27]
+list1 = [[subj,f] for f in range(1,2) for subj in range(2,3)]
 p=Pool(8)
 #p.map(func,list1)
 

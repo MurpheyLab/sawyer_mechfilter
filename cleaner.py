@@ -12,7 +12,7 @@ def crop_data(oldfile):
     with open(filename, 'w') as csvfile:
         testwriter = csv.writer(csvfile,delimiter = ',')
         testwriter.writerow(columns)
-
+    
     data = genfromtxt(oldfile,delimiter=',',dtype=float)
     data = np.delete(data,0,0)
     for i in range(0,np.shape(data)[0]):
@@ -21,6 +21,7 @@ def crop_data(oldfile):
             with open(filename,'a') as csvfile:
       	        testwriter = csv.writer(csvfile,delimiter=',')
                 testwriter.writerow(row)
+    
     return
 
 filetypes = {
@@ -37,7 +38,7 @@ filetypes = {
     11:"_umbrella_v_set02_mda.csv",
     12:"_umbrella_h_set02_mda.csv",
     13:"_umbrella_p_set03_mda.csv",}
-
+"""
 for subj in range(14,15):
     substr = str(subj).zfill(2)
     print "Cleaning data of subject ", substr
@@ -46,3 +47,4 @@ for subj in range(14,15):
             crop_data(DIR+"s"+substr+filetypes[f])
         except:
             print "No file of type s"+substr+filetypes[f]
+"""
