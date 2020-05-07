@@ -138,11 +138,13 @@ def splitter(input):
                                   time[endstate], dist,distvar,distTU,distvarTU,maxdist,dkl,paa)))
         row =[input[0],images[imglab],session, tlab,assist[asstlab],time[endstate],dist,distvar,
               distTU,distvarTU,maxdist,dkl,paa]
+        
         with open(newfile,'a') as csvfile:
       	        testwriter = csv.writer(csvfile,delimiter=',')
                 testwriter.writerow(row)
+        
         #print imglab
-        #plt.imshow(walls[imglab].img, cmap = 'gray', interpolation = 'bicubic')
+        #plt.imshow(255-walls[imglab].img, cmap = 'gray', interpolation = 'bicubic')
         #plt.plot(x,y)
         #plt.show()
         
@@ -160,7 +162,7 @@ def func(x):
         print "Could not find s"+str(x[0]).zfill(2)+filetypes[x[1]]
     return
 #sublist = [2,3,4,8,9,10,11,12,13,14,15,16,17]#20,27]
-list1 = [[subj,f] for f in range(1,14) for subj in range(2,28)]
+list1 = [[subj,f] for f in range(1,14) for subj in range(15,17)]
 p=Pool(8)
 p.map(func,list1)
 

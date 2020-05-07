@@ -14,6 +14,12 @@
 	  args="-d $(find sawyer_humcpp)/launch/apple-view.rviz" />
   </group>
 
+  <!-- startup simulator node -->
+  <group if="$(arg replay)">
+    <param name="use_sim_time" value="true" />
+    <node pkg="tf" type="static_transform_publisher" name="base_trep_broadcaster"
+	  args="0.0 0 0.0 0 0 0 base trep_world 100" />
+  </group>
 </launch>
 
   
