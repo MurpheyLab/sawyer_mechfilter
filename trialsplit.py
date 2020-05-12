@@ -13,7 +13,7 @@ images = {
     "house":3,
     "umbrella":4,
     "discard":0}
-
+"""
 applewall = wall.imagewalls("src/apple.png",SAMPS)
 banwall = wall.imagewalls("src/banana.png",SAMPS)
 housewall = wall.imagewalls("src/house.png",SAMPS)
@@ -24,7 +24,7 @@ walls = {
     "banana":banwall,
     "house":housewall,
     "umbrella":umbwall}
-    
+"""    
 assist = {
     "c":0,
     "h":1,
@@ -53,7 +53,7 @@ def splitter(input):
     offset = 0.
     if f ==2 or f==5 or f==8 or f==11: scale =1.
     if f==3 or f==6 or f==9 or f==12: offset = 0.5
-    oldfile = DIR+"s"+sub+filetypes[f];
+    oldfile = DIR+"cpp/s"+sub+filetypes[f];
     labels = DIR+"raw/image-testing-order-s"+sub+".csv"
     session = int(oldfile[oldfile.rfind('set')+3:oldfile.rfind('-cl')])
     asstlab = oldfile[oldfile.rfind('_set')-1:oldfile.rfind('_set')]
@@ -63,9 +63,11 @@ def splitter(input):
     datanames = genfromtxt(oldfile,delimiter=',',dtype=str)
     columns = datanames[0,:]
     del datanames
-    qind = np.where(columns=='field.q0')[0][0]
+    qind = np.where(columns=='x')[0][0]
     dqind = np.where(columns=='field.dq0')[0][0]
     paaind = np.where(columns=='field.accept')[0][0]
+    dind =np.where(columns=='pixdist')[0][0]
+    klind =np.where(columns=='dkl')[0][0]
     data = genfromtxt(oldfile,delimiter=',',dtype=float)
     data = np.delete(data,0,0)
     dlabel = genfromtxt(labels,delimiter=',',dtype=str)
@@ -85,14 +87,14 @@ def splitter(input):
         init=jj
         endstate = init+1001
         kldiv=1000.
-        distcounter = []
+        distcounter = [];dklist = [];
         x =[];y=[];v=[100.]*10
         if session ==1:
             imglab = dlabel[trialnum+1,1]
             tlab = float(dlabel[trialnum+1,2]);
         elif session ==2 or session ==3:
             imglab =oldfile[oldfile.rfind(sub+"_")+3:oldfile.rfind('_set')-2]
-            tlab = (session*10)+trialnum-10
+            tlab = (session*10)+trialnum-9
         mir=1.
         refl=0.
         if input[0]<=13:
@@ -103,9 +105,10 @@ def splitter(input):
             j=j+1
             jj=jj+1
             try:
-                x.append(refl+(mir*scale*data[jj,qind])+offset); y.append(scale*data[jj,qind+1]+offset)
+                x.append(data[jj,qind]); y.append(data[jj,qind+1])
                 v.append((data[jj,dqind]**2+data[jj,dqind+1]**2)**0.5)
-                distcounter.append(walls[imglab].findnearest(x[-1],y[-1])[2])
+                distcounter.append(data[jj,dind])
+                dklist.append(data[jj,klind])
             except:
                 x.append(data[jj-1,5]); y.append(data[jj-1,6])
                 v.append((data[jj-1,dqind]**2+data[jj-1,dqind+1]**2)**0.5)
@@ -116,7 +119,7 @@ def splitter(input):
                 trialflag=False; trialnum=trialnum+1; #print "Trial ", trialnum
                 if endstate==init+1001: endstate=jj-1
             elif sum(v)/len(v)<= 10**(-2) and endstate == init+1001 and time[jj]>6.0: 
-                endstate = jj-10; kldiv=sum(v)/len(v); #print kldiv
+                endstate = jj-10; 
                    
         end = init+j-1
         trialfull= data[init:end]
@@ -125,7 +128,8 @@ def splitter(input):
         x=x[:-1]#;x = np.array(x)
         y=y[:-1]#;y=np.array(y)
         q=np.array([x,y])
-        dkl=walls[imglab].qs_disc(q)#;print dkl
+        dkl=dklist[-1]
+        #if dkl==inf
         maxdist = max(distcounter)
         dist = sum(distcounter)/len(distcounter)
         distvar = np.var(distcounter)
@@ -134,8 +138,8 @@ def splitter(input):
         distvarTU = np.var(distcrop)#sum([(i-distTU)**2 for i in distcrop])/len(distcrop)
         #[kldiv,distance from nearest black pixel] =importedfuction(x,y)
         if endstate>=NumSamps: endstate = jj-1
-        metrics.append(np.hstack((input[0],images[imglab],session, tlab,assist[asstlab],
-                                  time[endstate], dist,distvar,distTU,distvarTU,maxdist,dkl,paa)))
+        #metrics.append(np.hstack((input[0],images[imglab],session, tlab,assist[asstlab],
+        #                         time[endstate], dist,distvar,distTU,distvarTU,maxdist,dkl,paa)))
         row =[input[0],images[imglab],session, tlab,assist[asstlab],time[endstate],dist,distvar,
               distTU,distvarTU,maxdist,dkl,paa]
         
@@ -149,20 +153,20 @@ def splitter(input):
         #plt.show()
         
     
-    metrics = np.array(metrics)
-    metlabels="subject,image,set,trial,assistance,TimeUsed,meand,vard,meandTU,vardTU,maxdist,dkl,paa"
-    np.savetxt(oldfile[:oldfile.rfind('-c')] + "-metricsv2.csv",metrics,fmt="%9.6f",delimiter=",",header=metlabels,comments='')
+    #metrics = np.array(metrics)
+    #metlabels="subject,image,set,trial,assistance,TimeUsed,meand,vard,meandTU,vardTU,maxdist,dkl,paa"
+    #np.savetxt(oldfile[:oldfile.rfind('-c')] + "-metricsv2.csv",metrics,fmt="%9.6f",delimiter=",",header=metlabels,comments='')
     return 
 
 def func(x):
-    print "Processing Subject ", x[0], " File ",x[1]
+    #print "Processing Subject ", x[0], " File ",x[1]
     try:
         splitter(x)
     except:
         print "Could not find s"+str(x[0]).zfill(2)+filetypes[x[1]]
     return
 #sublist = [2,3,4,8,9,10,11,12,13,14,15,16,17]#20,27]
-list1 = [[subj,f] for f in range(1,14) for subj in range(15,17)]
+list1 = [[subj,f] for f in range(1,14) for subj in range(2,28)]
 p=Pool(8)
 p.map(func,list1)
 

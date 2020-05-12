@@ -1,7 +1,7 @@
 import csv
 from numpy import genfromtxt
 import numpy as np
-DIR = "/home/kt-fitz/data/"
+DIR = "/home/kt-fitz/data/cpp/"
 
 
 filetypes = {
