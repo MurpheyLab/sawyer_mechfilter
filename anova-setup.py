@@ -1,7 +1,7 @@
 import csv
 from numpy import genfromtxt
 import numpy as np
-DIR = "/home/kt-fitz/data/cpp/"
+DIR = "/home/kt-fitz/data/cpp2/"
 
 
 filetypes = {
@@ -19,9 +19,10 @@ filetypes = {
     12:"_umbrella_h_set02",
     13:"_umbrella_p_set03",}
 
-group = {2:2,3:1,4:1,5:2,6:1,7:2,9:1,10:2,11:1,12:2,13:2,14:1,15:2,18:2,19:2,20:2,21:2,22:1,
+group = {2:2,3:1,4:1,5:2,6:1,7:2,9:1,10:2,11:1,12:2,13:2,14:1,15:2,16:1,18:2,19:2,20:2,21:2,22:1,
          23:1,24:1,25:1,26:1,27:2}
-
+block = {1:1,2:1,3:1,4:1,5:1,6:2,7:2,8:2,9:2,10:2,11:3,12:3,13:3,14:3,15:3,16:4,17:4,18:4,19:4,20:4,
+         21:5,22:5,23:5,24:5,25:5,26:6,27:6,28:6,29:6,30:6,31:6}
 newfile=DIR+"alldata2.csv"
 columns = ["subject","image","set","trial","assistance","TimeUsed","meand","vard","meandTU","vardTU","maxdist","dkl","paa"]
 with open(newfile, 'w') as csvfile:
@@ -35,6 +36,7 @@ for subj in range(2,28):
             data = np.delete(data,0,0)
             for i in range(0,np.shape(data)[0]):
                 row = data[i,:]
+                row[3]=block[row[3]]
                 row[4]=group[subj]
                 with open(newfile,'a') as csvfile:
       	            testwriter = csv.writer(csvfile,delimiter=',')

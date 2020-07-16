@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import imgwalls as wall
 from multiprocessing import Pool
 import csv
+import cv2
+import random
 
 DIR = "/home/kt-fitz/data/"
 SAMPS = 65
@@ -13,18 +15,7 @@ images = {
     "house":3,
     "umbrella":4,
     "discard":0}
-"""
-applewall = wall.imagewalls("src/apple.png",SAMPS)
-banwall = wall.imagewalls("src/banana.png",SAMPS)
-housewall = wall.imagewalls("src/house.png",SAMPS)
-umbwall = wall.imagewalls("src/umbrella.png",SAMPS)
 
-walls = {
-    "apple":applewall,
-    "banana":banwall,
-    "house":housewall,
-    "umbrella":umbwall}
-"""    
 assist = {
     "c":0,
     "h":1,
@@ -53,7 +44,7 @@ def splitter(input):
     offset = 0.
     if f ==2 or f==5 or f==8 or f==11: scale =1.
     if f==3 or f==6 or f==9 or f==12: offset = 0.5
-    oldfile = DIR+"cpp/s"+sub+filetypes[f];
+    oldfile = DIR+"cpp2/s"+sub+filetypes[f];
     labels = DIR+"raw/image-testing-order-s"+sub+".csv"
     session = int(oldfile[oldfile.rfind('set')+3:oldfile.rfind('-cl')])
     asstlab = oldfile[oldfile.rfind('_set')-1:oldfile.rfind('_set')]
@@ -77,7 +68,7 @@ def splitter(input):
     intIndex = int(round(tf/dT +2))
     jj=0
     trialnum = 0
-    columns = ["subject","image","set","trial","assistance","TimeUsed","meand","vard","meandTU","vardTU","maxdist","dkl","paa"]
+    columns = ["subject","image","set","trial","assistance","TimeUsed","meand","vard","meandTU","vardTU","maxdist","dkl","paa","ratingcode"]
     with open(newfile, 'w') as csvfile:
         testwriter = csv.writer(csvfile,delimiter = ',')
         testwriter.writerow(columns)
@@ -128,30 +119,37 @@ def splitter(input):
         x=x[:-1]#;x = np.array(x)
         y=y[:-1]#;y=np.array(y)
         q=np.array([x,y])
-        dkl=dklist[-1]
+        dkl=dklist[400]
         #if dkl==inf
         maxdist = max(distcounter)
-        dist = sum(distcounter)/len(distcounter)
+        dist = sum(distcounter[100:300])/len(distcounter[100:300])
         distvar = np.var(distcounter)
         distcrop=distcounter[0:(endstate-init)]
         distTU = sum(distcrop)/len(distcrop)
-        distvarTU = np.var(distcrop)#sum([(i-distTU)**2 for i in distcrop])/len(distcrop)
-        #[kldiv,distance from nearest black pixel] =importedfuction(x,y)
+        distvarTU = np.var(distcrop)
         if endstate>=NumSamps: endstate = jj-1
-        #metrics.append(np.hstack((input[0],images[imglab],session, tlab,assist[asstlab],
-        #                         time[endstate], dist,distvar,distTU,distvarTU,maxdist,dkl,paa)))
+        imcode = random.randint(0,999999)
+        imname = DIR +"imgratings/"+str(imcode).zfill(6)+".png"
         row =[input[0],images[imglab],session, tlab,assist[asstlab],time[endstate],dist,distvar,
-              distTU,distvarTU,maxdist,dkl,paa]
+              dist,distvarTU,maxdist,dkl,paa,imcode]
+              #distTU,distvarTU,maxdist,dkl,paa]
         
         with open(newfile,'a') as csvfile:
       	        testwriter = csv.writer(csvfile,delimiter=',')
                 testwriter.writerow(row)
         
         #print imglab
-        #plt.imshow(255-walls[imglab].img, cmap = 'gray', interpolation = 'bicubic')
-        #plt.plot(x,y)
-        #plt.show()
-        
+        if imglab!="discard":
+            img = cv2.imread("src/"+imglab+".png",cv2.IMREAD_GRAYSCALE)
+            x1=(np.array(x[0:500])+0.5)*2200
+            if imglab=="umbrella" or imglab=="apple":x1=2200-x1
+            x2=(np.array(y[0:500])+0.5)*2200
+            plt.figure()
+            plt.imshow(img, cmap = 'gray', interpolation = 'bicubic')
+            plt.plot(x1,x2,'o',color='green')#plt.scatter(x1,x2,marker='o')
+            plt.savefig(imname)
+            #plt.show()
+            plt.close()
     
     #metrics = np.array(metrics)
     #metlabels="subject,image,set,trial,assistance,TimeUsed,meand,vard,meandTU,vardTU,maxdist,dkl,paa"
@@ -165,8 +163,8 @@ def func(x):
     except:
         print "Could not find s"+str(x[0]).zfill(2)+filetypes[x[1]]
     return
-#sublist = [2,3,4,8,9,10,11,12,13,14,15,16,17]#20,27]
-list1 = [[subj,f] for f in range(1,14) for subj in range(2,28)]
+sublist = [2,3,4,8,9,10,11,12,13,14,15,16,17]#20,27]
+list1 = [[subj,f] for f in range(1,14) for subj in range(13,28)]
 p=Pool(8)
 p.map(func,list1)
 
